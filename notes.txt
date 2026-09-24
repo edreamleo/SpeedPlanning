@@ -229,6 +229,8 @@ html_content = """
 """
 .. @-all
 
+Repo: https://github.com/edreamleo/SpeedPlanning
+
 Qt WebEngine is based on the open-source Chromium project and uses the Blink rendering engine.
 
 All code based on this gemini conversation: https://share.gemini.google/pyz22WW3idU7
