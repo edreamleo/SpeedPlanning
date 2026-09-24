@@ -234,11 +234,6 @@ if not view:
     g.app.permanentScriptDict['demo'] = view = MermaidWebView()
 controller = LeoController(c)
 controller.view = view
-# channel = QWebChannel()
-# handler = MermaidEventHandler()
-# handler.controller = controller
-# channel.registerObject('mermaid_bridge', handler)
-# view.page().setWebChannel(channel)
 view.setHtml(controller.update_content())
 view.show()
 c.bodyWantsFocusNow()
