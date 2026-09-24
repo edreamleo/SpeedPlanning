@@ -177,28 +177,35 @@ class LeoController:
             return
 
         result = ['graph TD\n']
+        ws = ' ' * 4
 
-        def add_link(parent_id: str, parent_h: str, child_id: str, child_h: str) -> None:
-            result.append(f"    {parent_id}[{parent_h}] --> {child_id}[{child_h}]\n")
+        def h(p: Position) -> str:
+            """Return the effective headline"""
+            s = p.b.strip()
+            line1 = g.splitLines(s)[0] if s else ''
+            return f"{p.h} <br> {line1}" if line1 else p.h
+
+        def add_link(parent: Position, parent_id: str, child: Position, child_id: str) -> None:
+            result.append(f"{ws}{parent_id}[{h(parent)}] --> {child_id}[{h(child)}]\n")
 
         def add_node(p: Position) -> str:
             n = self.n_nodes
             new_id = 'Root' if p == root else f"Node{n}"
             self.n_nodes += 1
             self.id_dict[new_id] = p.v.gnx
-            result.append(f"    {new_id}[{p.h}]\n")
-            result.append(f"    click {new_id} call pyCallback()\n")
+            result.append(f"{ws}{new_id}[{h(p)}]\n")
+            result.append(f"{ws}click {new_id} call pyCallback()\n")
             return new_id
 
         def build(parent: Position, parent_id: str, p: Position) -> None:
             p_id = add_node(p)
             if parent:
-                add_link(parent_id, parent.h, p_id, p.h)
+                add_link(parent, parent_id, p, p_id)
             for child in p.children():
                 build(p, p_id, child)
 
         build(None, '', root)
-        # g.printObj(result)
+        g.printObj(result)
         return ''.join(result)
 
     # @+node:ekr.20260924040552.1: *4* LC.update_content

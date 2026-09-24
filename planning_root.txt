@@ -6,12 +6,12 @@
 @language rest
 @wrap
 
-.. @+node:ekr.20260924120140.1: *3* A
-.. @+node:ekr.20260924042736.2: *3* @section: steel
-.. @+node:ekr.20260924042736.3: *3* @lane: software engineers
-.. @+node:ekr.20260924042736.4: *3* @task blah blah
-blah blah
-.. @+node:ekr.20260924042736.5: *4* @task: buy tone: ne
+.. @+node:ekr.20260924042736.2: *3* Section: steel
+Line 1
+.. @+node:ekr.20260924042736.3: *3* Lane: software engineers
+.. @+node:ekr.20260924042736.4: *3* Group <br> test
+Group text
+.. @+node:ekr.20260924042736.5: *4* Task 1
 :task: Two cases of toner.
 
 :name: Jack T. Ripper
@@ -20,9 +20,8 @@ blah blah
 
 :cost: 
 
-.. @+node:ekr.20260924042736.6: *5* @square
-.. @+node:ekr.20260924042736.7: *4* @square: s
-.. @+node:ekr.20260924042736.8: *4* @sqaure: se
-.. @+node:ekr.20260924042736.9: *4* @square: sw
+.. @+node:ekr.20260924042736.6: *5* Task 1.1
+.. @+node:ekr.20260924163445.1: *5* Task 1.2
+.. @+node:ekr.20260924042736.7: *4* Task 2
 .. @-all
 .. @-leo
