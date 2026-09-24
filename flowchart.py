@@ -181,9 +181,8 @@ class LeoController:
 
         def h(p: Position) -> str:
             """Return the effective headline"""
-            s = p.b.strip()
-            line1 = g.splitLines(s)[0] if s else ''
-            return f"{p.h} <br> {line1}" if line1 else p.h
+            lines = [z.rstrip() for z in g.splitLines(p.b) if z.strip()]
+            return f"{p.h.strip()} <br> <br> {' <br> '.join(lines)}{ws}" if lines else p.h
 
         def add_link(parent: Position, parent_id: str, child: Position, child_id: str) -> None:
             result.append(f"{ws}{parent_id}[{h(parent)}] --> {child_id}[{h(child)}]\n")
@@ -194,6 +193,8 @@ class LeoController:
             self.n_nodes += 1
             self.id_dict[new_id] = p.v.gnx
             result.append(f"{ws}{new_id}[{h(p)}]\n")
+            if '<br>' in h(p):
+                result.append(f"{ws}style {new_id} text-align:left;")
             result.append(f"{ws}click {new_id} call pyCallback()\n")
             return new_id
 
@@ -205,7 +206,7 @@ class LeoController:
                 build(p, p_id, child)
 
         build(None, '', root)
-        g.printObj(result)
+        # g.printObj(result)
         return ''.join(result)
 
     # @+node:ekr.20260924040552.1: *4* LC.update_content

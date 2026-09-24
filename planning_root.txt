@@ -9,7 +9,7 @@
 .. @+node:ekr.20260924042736.2: *3* Section: steel
 Line 1
 .. @+node:ekr.20260924042736.3: *3* Lane: software engineers
-.. @+node:ekr.20260924042736.4: *3* Group <br> test
+.. @+node:ekr.20260924042736.4: *3* Group
 Group text
 .. @+node:ekr.20260924042736.5: *4* Task 1
 :task: Two cases of toner.
