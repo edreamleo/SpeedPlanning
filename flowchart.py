@@ -2,7 +2,6 @@
 # @+node:ekr.20260924114930.1: * @file flowchart.py
 # @@language python
 
-
 # @+others
 # @+node:ekr.20260922175054.5: ** @button flow-chart
 # @@language python
@@ -45,8 +44,7 @@ webchannel_script = js_file.readAll().data().decode('utf-8')
 # @-<< create the webchannel script >>
 # @+<< define html_template >>
 # @+node:ekr.20260924040355.3: *3* << define html_template >>
-html_template = (
-    """
+html_template = """
     <!DOCTYPE html>
     <html>
     <head>
@@ -144,13 +142,13 @@ html_template = (
         </script>
     </body>
     </html>
-    """)
+    """
 # @-<< define html_template >>
+
 
 # @+others
 # @+node:ekr.20260924040355.1: *3* class LeoController
 class LeoController:
-
     # @+<< define content >>
     # @+node:ekr.20260924040355.2: *4* << define content >>
     content = textwrap.dedent("""
@@ -163,7 +161,7 @@ class LeoController:
     n_nodes = 0
     id_dict: dict[str, str] = {}  # For uAs.
     moving = False
-    
+
     def __init__(self, c: Cmdr) -> None:
         self.c = c
 
@@ -177,12 +175,12 @@ class LeoController:
             g.trace(f"Not found: {h}")
             g.app.permanentScriptDict['demo'] = None
             return
-            
+
         result = ['graph TD\n']
-            
+
         def add_link(parent_id: str, parent_h: str, child_id: str, child_h: str) -> None:
             result.append(f"    {parent_id}[{parent_h}] --> {child_id}[{child_h}]\n")
-            
+
         def add_node(p: Position) -> str:
             n = self.n_nodes
             new_id = 'Root' if p == root else f"Node{n}"
@@ -191,7 +189,7 @@ class LeoController:
             result.append(f"    {new_id}[{p.h}]\n")
             result.append(f"    click {new_id} call pyCallback()\n")
             return new_id
-            
+
         def build(parent: Position, parent_id: str, p: Position) -> None:
             p_id = add_node(p)
             if parent:
@@ -202,29 +200,32 @@ class LeoController:
         build(None, '', root)
         # g.printObj(result)
         return ''.join(result)
+
     # @+node:ekr.20260924040552.1: *4* LC.update_content
     def update_content(self) -> str:
         self.content = self.get_content()
         # g.printObj(self.content)
         g.trace(f"{self.content.count('\n')} lines")
-        return (
-            html_template
-            .replace('webchannel_script', webchannel_script)
-            .replace('mermaid_content', self.content)
+        return html_template.replace('webchannel_script', webchannel_script).replace(
+            'mermaid_content', self.content
         )
+
     # @-others
+
+
 # @+node:ekr.20260924035448.1: *3* class MermaidWebView
 class MermaidWebView(QWebEngineView):
-
     def __init__(self):
         super().__init__()
 
     # Override the native Qt event handler
     def closeEvent(self, event: QCloseEvent):
-        
+
         g.app.permanentScriptDict['demo'] = None
         # Allow the window to close
         event.accept()
+
+
 # @-others
 
 view = g.app.permanentScriptDict.get('demo')

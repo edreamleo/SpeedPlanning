@@ -9,6 +9,11 @@
 <v t="ekr.20260923042416.1"><vh>Startup</vh>
 <v t="ekr.20260923042755.1"><vh>@settings</vh>
 <v t="ekr.20260923042704.1"><vh>@data history-list</vh></v>
+<v t="ekr.20260924121154.1"><vh>Beautifying files</vh>
+<v t="ekr.20260924121154.2"><vh>@bool beautify-python-code-on-write = True</vh></v>
+<v t="ekr.20260924121154.3"><vh>@int black-line-length = 100</vh></v>
+<v t="ekr.20260924121154.4"><vh>@string black-toml = None</vh></v>
+</v>
 </v>
 <v t="ekr.20260923042421.1"><vh>@button backup</vh></v>
 <v t="ekr.20260924050522.1"><vh>@button kill-flow-chart</vh></v>
@@ -32,5 +37,13 @@ c.backup_helper(sub_dir='SpeedPlanning')
 <t tx="ekr.20260923042704.1">flow-chart</t>
 <t tx="ekr.20260923042755.1"></t>
 <t tx="ekr.20260924050522.1">g.app.permanentScriptDict['demo'] = None</t>
+<t tx="ekr.20260924121154.1"># These settings control ruff format, which is compatible with black.</t>
+<t tx="ekr.20260924121154.2"># True: beautify all @&lt;file&gt; nodes in the outline using Leo's token-based beautifier.
+# True can result in much slower writes.</t>
+<t tx="ekr.20260924121154.3"># This setting overrides any value in pyproject.toml or ruff.toml
+# Leo uses 120 for its own files.</t>
+<t tx="ekr.20260924121154.4"># If given, this argument should be a full, absolute path to pyproject.toml or ruff.toml.
+# If not given, Leo's beautifier uses Leo's pyproject.toml file.
+</t>
 </tnodes>
 </leo_file>
