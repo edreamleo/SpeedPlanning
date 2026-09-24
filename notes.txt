@@ -1,0 +1,235 @@
+.. @+leo-ver=5-thin
+.. @+node:ekr.20260924115347.1: * @file notes.txt
+.. @@language rest
+.. @@wrap
+.. @@nosearch
+.. @+all
+.. @+node:ekr.20260922175054.1: ** Notes (do not delete)
+.. @+node:ekr.20260923035124.1: *3*  To do
+@language rest
+
+- Design the resource view.
+
+@language python
+.. @+node:ekr.20260924114719.1: *3* Design notes
+@language rest
+@wrap
+
+=== Input program communicates with Leo
+
+It insert a new task at a given point in the flowchart pane and
+a magic script inserts an @task node in the proper place in the Leo outine.
+
+=== Listener in Leo: listens for new tasks.
+
+Update button: update (magically) creates three different web pages using one or more tasks.
+
+=== Output Visual (Big whiteboards == web pages)
+    
+Flowchart pane, updated by elicitator. Data flows to Leo outline
+Gantt chart
+Resource spreadsheet
+
+Export to Jira:
+    
+Kanban (almost a subsection of Agile)
+Agile
+Waterfall
+
+=== Every task has name, description, resource list, length of time.
+
+Dropdown list only for resource list.
+Everything else entered on keyboard.
+Usually only the name of the task.
+
+=== If leo-web were an electron app would fix all file access problems.
+
+We don't want an electron app because we want Python scripting.
+
+=== Remote control might be part of the mix.
+
+=== The real value is dynamic.
+
+Dynamism create excitement & clarity.
+Speed is important.
+Elicitation method guides the CEO. The CEO's clarity creates the tasks.
+The instant feedback makes the whole project seem more real.
+Everybody wants to contribute. Hands go up.
+Part of value added is all the infrastruction.
+
+=== Jira has plugin system.
+
+Could be standalone or Jira plugin.
+.. @+node:ekr.20260922175054.2: *3* CPM algorithm
+@language rest
+@wrap
+
+Google: critical path method algorithm
+
+The critical path algorithm (Critical Path Method or CPM) is a step-by-step project management technique that finds the longest sequence of dependent tasks to determine the shortest possible project duration.
+
+=== How the Algorithm Works
+
+The algorithm uses a network diagram to map project activities, their durations, and their dependencies. It runs through four main phases:
+
+**Forward Pass**: Moves from start to finish to calculate the Earliest Start (ES) and Earliest Finish (EF) times for each task (EF = ES + duration).
+
+**Backward Pass**: Moves from the project end date back to the start to calculate the Latest Start (LS) and Latest Finish (LF) times (LS = LF - duration).
+
+**Float Calculation**: Finds the slack or buffer time for each task using the formula: Float = LS - ES (or LF - EF).
+
+**Path Identification**: Identifies the continuous chain of tasks that have zero float, which forms the critical path. Any delay on this path delays the entire project.
+.. @+node:ekr.20260923130208.1: *3* Critical path algorithm
+class Task:
+    def __init__(self, name, duration):
+        self.name = name
+        self.duration = duration
+        self.dependencies = []
+        
+        # CPM Metrics
+        self.es = 0   # Early Start
+        self.ef = 0   # Early Finish
+        self.ls = 0   # Late Start
+        self.lf = 0   # Late Finish
+        self.slack = 0
+
+    def __repr__(self):
+        return (f"Task({self.name}): ES={self.es}, EF={self.ef}, "
+                f"LS={self.ls}, LF={self.lf}, Slack={self.slack}")
+
+
+def calculate_critical_path(tasks):
+    # 1. Topological Sort (Ensure dependencies are processed first)
+    # Simple dependency resolution for DAGs
+    ordered_tasks = []
+    visited = set()
+    
+    def visit(task):
+        if task not in visited:
+            for dep in task.dependencies:
+                visit(dep)
+            visited.add(task)
+            ordered_tasks.append(task)
+
+    for task in tasks.values():
+        visit(task)
+
+    # 2. Forward Pass: Calculate ES and EF
+    for task in ordered_tasks:
+        if not task.dependencies:
+            task.es = 0
+        else:
+            task.es = max(dep.ef for dep in task.dependencies)
+        task.ef = task.es + task.duration
+
+    # Find total project duration
+    project_duration = max(task.ef for task in ordered_tasks)
+
+    # 3. Backward Pass: Calculate LF and LS
+    # We reverse the topological order to process dependencies backwards
+    for task in reversed(ordered_tasks):
+        # Find which tasks depend on the current task
+        successors = [t for t in ordered_tasks if task in t.dependencies]
+        
+        if not successors:
+            task.lf = project_duration
+        else:
+            task.lf = min(succ.ls for succ in successors)
+        task.ls = task.lf - task.duration
+        
+        # 4. Calculate Slack / Float
+        task.slack = task.lf - task.ef
+
+    # 5. Extract the Critical Path (Tasks with 0 slack)
+    critical_path = [task.name for task in ordered_tasks if task.slack == 0]
+    
+    return project_duration, critical_path
+
+
+# --- Example Usage ---
+if __name__ == "__main__":
+    # Define tasks with names and durations
+    data = {
+        'A': Task('A', 3),
+        'B': Task('B', 4),
+        'C': Task('C', 2),
+        'D': Task('D', 5),
+        'E': Task('E', 3)
+    }
+
+    # Set up dependencies (e.g., B depends on A)
+    data['B'].dependencies = [data['A']]
+    data['C'].dependencies = [data['A']]
+    data['D'].dependencies = [data['B']]
+    data['E'].dependencies = [data['C'], data['D']]
+
+    # Run Algorithm
+    duration, path = calculate_critical_path(data)
+
+    print(f"Total Project Duration: {duration} days\n")
+    print("Task Details:")
+    for name, task in data.items():
+        print(task)
+        
+    print(f"\nCritical Path: {' -> '.join(path)}")
+.. @+node:ekr.20260922175054.3: *3* Works: mermaid gantt in Qt
+from PyQt6.QtCore import QUrl
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+
+<< define content >>
+
+view = QWebEngineView()
+view.setHtml(html_content, QUrl("http://localhost"))
+view.resize(800, 400)
+view.show()
+g.app.scriptDict['demo'] = view
+
+.. @+node:ekr.20260922175054.4: *4* << define content >>
+html_content = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { margin: 0; padding: 20px; font-family: sans-serif; background: gray; }
+    </style>
+</head>
+<body>
+
+    <pre class="mermaid">
+        gantt
+        title Product Launch Plan
+        dateFormat YYYY-MM-DD
+        section Planning
+            Market research      :done, research, 2024-03-01, 10d
+            Define requirements  :done, reqs, after research, 7d
+        section Build
+            Design prototype     :active, proto, after reqs, 14d
+            User testing         :testing, after proto, 7d
+        section Launch
+            Marketing campaign   :marketing, after proto, 14d
+            Release day          :milestone, after testing, 0d
+    </pre>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        
+        mermaid.initialize({ 
+            startOnLoad: false, // Prevents premature parsing race conditions
+            securityLevel: 'loose' 
+        });
+        
+        // Explicitly trigger parsing once everything is mounted
+        document.addEventListener('DOMContentLoaded', async () => {
+            await mermaid.run();
+        });
+    </script>
+</body>
+</html>
+"""
+.. @-all
+
+Qt WebEngine is based on the open-source Chromium project and uses the Blink rendering engine.
+
+All code based on this gemini conversation: https://share.gemini.google/pyz22WW3idU7
+.. @-leo

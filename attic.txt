@@ -1,0 +1,727 @@
+#@+leo-ver=5-thin
+#@+node:ekr.20260924114454.1: * @file attic.txt
+#@@nosearch
+#@+all
+#@+node:ekr.20260924114340.1: ** Top level: command flow-chart
+@language python
+
+"""Mermaid demo"""
+
+<< flow-chart: imports >>
+g.cls()
+<< create the webchannel script >>
+<< define html_template >>
+
+@others
+
+view = g.app.permanentScriptDict.get('demo')
+print(f"view? {bool(view)}")
+if not view:
+    g.app.permanentScriptDict['demo'] = view = MermaidWebView()
+controller = LeoController(c)
+controller.view = view
+# channel = QWebChannel()
+# handler = MermaidEventHandler()
+# handler.controller = controller
+# channel.registerObject('mermaid_bridge', handler)
+# view.page().setWebChannel(channel)
+view.setHtml(controller.update_content())
+view.show()
+c.bodyWantsFocusNow()
+#@+node:ekr.20260922175054.8: ** class Controller
+class Controller:
+    
+    << define content >>
+    << define html_template >>
+    root_id = 'Root'
+    n_nodes = 1
+    id_dict: dict[str, str] = {}  # For uAs.
+    moving = False
+
+    @others
+#@+node:ekr.20260923044849.1: *3* << define content >>
+content = textwrap.dedent("""
+graph TD
+    Root[Root]
+    click Root call pyCallback()
+""").lstrip()
+#@+node:ekr.20260923040212.1: *3* << define html_template >>
+html_template = (
+    """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <!-- Inline Qt WebChannel Script -->
+        <script>webchannel_script</script>
+
+        <script type="module">
+            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+            mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+            
+            // Explicitly attach to the global namespace
+            window.mermaid = mermaid;
+        </script>
+
+    </head>
+    <body>
+        <div class="mermaid">
+            mermaid_content
+        </div>
+
+        <script>
+        window.pyCallback = function(nodeId) {
+            if (window.pythonBackend) {
+                window.pythonBackend.node_clicked(nodeId);
+            } else {
+                console.error("IPC bridge not ready.");
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof qt !== 'undefined' && qt.webChannelTransport) {
+                new QWebChannel(qt.webChannelTransport, function(channel) {
+                    window.pythonBackend = channel.objects.mermaid_bridge;
+                });
+            }
+        });
+
+        window.pyCallback = function(nodeId) {
+            if (!window.pythonBackend) {
+                console.error("IPC bridge not ready.");
+                return;
+            }
+
+            let labelText = "Label Extraction Failed";
+
+            // 1. Locate all rendered flowchart nodes
+            let svgNodes = document.querySelectorAll('.node');
+
+            // 2. Iterate to find the exact node ID match
+            for (let i = 0; i < svgNodes.length; i++) {
+                let svgNode = svgNodes[i];
+
+                // Split the dynamically generated DOM ID on hyphens. 
+                // This prevents false substring matches (e.g., node "A" matching node "AB").
+                let idSegments = svgNode.id.split('-');
+
+                if (svgNode.id === nodeId || idSegments.includes(nodeId)) {
+                    // 3. Target the specific class Mermaid assigns to HTML labels
+                    let labelElement = svgNode.querySelector('.nodeLabel');
+
+                    if (labelElement) {
+                        // Extract purely the text, stripping any embedded HTML
+                        labelText = labelElement.textContent || labelElement.innerText;
+
+                        // Mermaid sometimes injects extraneous whitespace/newlines into labels
+                        labelText = labelText.trim();
+                    }
+                    break;
+                }
+            }
+
+            // 4. Pass the dual-argument payload to Python
+            window.pythonBackend.node_clicked(nodeId, labelText);
+        };
+
+        window.reRenderGraph = async function(newGraphText) {
+            const container = document.querySelector('.mermaid');
+            try {
+                // 1. Revert the container strictly to raw text, destroying the old SVG
+                container.textContent = newGraphText;
+
+                // 2. Remove the internal flag that prevents Mermaid from re-processing the div
+                container.removeAttribute('data-processed');
+
+                // 3. Trigger the native rendering pipeline on the specific container
+                await window.mermaid.run({
+                    nodes: [container]
+                });
+
+            } catch (error) {
+                console.error("Mermaid re-render failed:", error);
+            }
+        };
+        </script>
+    </body>
+    </html>
+    """)
+#@+node:ekr.20260923132125.1: *3* Controller.get_new_id
+def get_new_id(self) -> str:
+    """Get a new node index"""
+    t = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
+    return f"{g.app.leoID}:{t}"
+#@+node:ekr.20260923041012.1: *3* Controller.delete_node
+def delete_node(self, node_id: str, label: str) -> None:
+
+    if node_id == self.root_id:
+        g.es_print('Can not delete the root node', color='red')
+        return
+    lines = g.splitLines(self.content)
+    # Find the parents of the to-be-deleted node.
+    parent_pattern = re.compile(rf"\s*(\w+)\[(.*?)\]\s*-->\s*{node_id}\[{label}\]")
+    parents = []
+    for s in lines:
+        if m := parent_pattern.match(s):
+            parents.append((m.group(1), m.group(2)))
+    # g.trace(f"{parents=}")
+    # Find children of the to-be-deleted node.
+    child_pattern = re.compile(rf"^\s*{node_id}\[{label}\] --> (\w+)\s*\[")
+    children = []
+    for s in lines:
+        if m := child_pattern.match(s):
+            children.append(m.group(1))
+    # Switch links from the parent to all the children.
+    for parent_tuple in parents:
+        parent_id, parent_label = parent_tuple
+        for child in children:
+            link_from_pattern = re.compile(rf"^\s*{node_id}\[{label}\] --> (\w+)\s*\[(.*?)\]")
+            for i, s in enumerate(lines):
+                if m := link_from_pattern.match(s):
+                    lines[i] = f"    {parent_id}[{parent_label}] --> {m.group(1)}[{m.group(2)}]\n"
+                    break
+    # Remove all references to the deleted node.
+    node_pattern = re.compile(rf"^\s*{node_id}\s*\[{label}\]")
+    click_pattern = re.compile(rf"^\s*click\s+{node_id}\s*call")
+    link_to_pattern = re.compile(rf"^(.*?)-->\s*{node_id}")
+    result = []
+    for s in lines:
+        if not s.strip():
+            continue  # Delete blank lines.
+        if node_pattern.match(s):
+            continue  # Delete the node itself.
+        if click_pattern.match(s):
+            continue  # Delete the node itself.
+        m = link_to_pattern.match(s)
+        if m:  # Delete the link to the node.
+            new_line = m.group(1).rstrip() + '\n'
+            if new_line not in result:
+                result.append(new_line)
+            continue  
+        result.append(s)
+    # Update and refresh.
+    self.content = ''.join(result)
+    self.refresh()
+#@+node:ekr.20260923041013.1: *3* Controller.insert_node
+def insert_node(self, node_id: str, label: str) -> None:
+    n = self.n_nodes
+    new_id = f"Node{n}"
+    self.n_nodes += 1
+    self.id_dict[new_id] = self.get_new_id()
+    result = g.splitLines(self.content)
+    result.append(f"    {node_id}[{label}] --> {new_id}[Node {n}]\n")
+    result.append(f"    click {new_id} call pyCallback()\n")
+    self.content = ''.join(result)
+    self.refresh()
+#@+node:ekr.20260923162300.1: *3* Controller.move_node & move_node2
+def move_node(self, node_id: str, label: str) -> None:
+    
+    if node_id == self.root_id:
+        g.es_print('Can not move the root node', color='red')
+        return
+    self.moving = True
+    g.es_print('Select the new parent')
+
+def move_node2(self, node_id: stri, label: str) -> None:
+    g.trace(node_id, label)
+    self.moving = False
+#@+node:ekr.20260923042146.1: *3* Controller.refresh
+def refresh(self) -> None:
+    """Update the screen."""
+    
+    # Don't sort lines: it changes screen order.
+    #   lines = g.splitLines(self.content)
+    #   self.content = ''.join([lines[0]] + list(sorted(lines[1:])))
+    
+    g.printObj(self.content, tag='refresh')
+            
+    # Escape backticks and backslashes to prevent JS syntax errors
+    escaped_string = self.content.replace('\\', '\\\\').replace('`', '\\`')
+    
+    # Execute the JS function asynchronously
+    self.view.page().runJavaScript(f"window.reRenderGraph(`{escaped_string}`);")
+#@+node:ekr.20260923171237.1: *3* Controller.rename_dialog
+def rename_dialog(self, old_name: str) -> str:
+    """Put up a dialog asking for a node's name"""
+    dialog = QInputDialog()
+    dialog.setWindowTitle('Rename node')
+    dialog.setLabelText(f"New name for {old_name}:")
+    dialog.raise_()
+    ok = dialog.exec()
+    return str(dialog.textValue()) if ok else ''
+
+#@+node:ekr.20260923130657.1: *3* Controller.rename_node
+def rename_node(self, node_id: str, label: str) -> None:
+    """Rename the given node."""
+    new_name = self.rename_dialog(label)
+    if not new_name:
+        return
+    node_pattern = re.compile(rf"^\s*{node_id}\[{label}\]\n")
+    link_from_pattern = re.compile(rf"^\s*{node_id}\[{label}\]\s*-->\s*(\w+)\[(.*?)\]")
+    link_to_pattern = re.compile(rf"^(.*?)-->\s*{node_id}\[{label}\]")
+    result = []
+    ws = ' '*4
+    for s in g.splitLines(self.content):
+        m = node_pattern.match(s)
+        if m:
+            result.append(f"{ws}{node_id}[{new_name}]\n")
+            continue
+        m = link_from_pattern.match(s)
+        if m:
+            result.append(f"{ws}{node_id}[{new_name}] --> {m.group(1)}[{m.group(2)}]\n")
+            continue
+        m = link_to_pattern.match(s)
+        if m:
+            result.append(f"{ws}{m.group(1).strip()} --> {node_id}[{new_name}]\n")
+            continue
+        result.append(s)
+    # Update and refresh.
+    self.content = ''.join(result)
+    self.refresh()
+#@+node:ekr.20260922175054.10: *3* Controller.update_content
+def update_content(self, new_content: str = '') -> str:
+    
+    if new_content:
+        self.content = new_content
+    return (
+        self.html_template
+        .replace('webchannel_script', webchannel_script)
+        .replace('mermaid_content', self.content)
+    )
+#@+node:ekr.20260924081809.1: ** COPY: << define html_template >>
+html_template = (
+    """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <!-- Inline Qt WebChannel Script -->
+        <script>webchannel_script</script>
+
+        <script type="module">
+            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+            mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+            
+            // Explicitly attach to the global namespace
+            window.mermaid = mermaid;
+        </script>
+
+    </head>
+    <body>
+        <div class="mermaid">
+            mermaid_content
+        </div>
+
+        <script>
+        window.pyCallback = function(nodeId) {
+            if (window.pythonBackend) {
+                window.pythonBackend.node_clicked(nodeId);
+            } else {
+                console.error("IPC bridge not ready.");
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof qt !== 'undefined' && qt.webChannelTransport) {
+                new QWebChannel(qt.webChannelTransport, function(channel) {
+                    window.pythonBackend = channel.objects.mermaid_bridge;
+                });
+            }
+        });
+
+        window.pyCallback = function(nodeId) {
+            if (!window.pythonBackend) {
+                console.error("IPC bridge not ready.");
+                return;
+            }
+
+            let labelText = "Label Extraction Failed";
+
+            // 1. Locate all rendered flowchart nodes
+            let svgNodes = document.querySelectorAll('.node');
+
+            // 2. Iterate to find the exact node ID match
+            for (let i = 0; i < svgNodes.length; i++) {
+                let svgNode = svgNodes[i];
+
+                // Split the dynamically generated DOM ID on hyphens. 
+                // This prevents false substring matches (e.g., node "A" matching node "AB").
+                let idSegments = svgNode.id.split('-');
+
+                if (svgNode.id === nodeId || idSegments.includes(nodeId)) {
+                    // 3. Target the specific class Mermaid assigns to HTML labels
+                    let labelElement = svgNode.querySelector('.nodeLabel');
+
+                    if (labelElement) {
+                        // Extract purely the text, stripping any embedded HTML
+                        labelText = labelElement.textContent || labelElement.innerText;
+
+                        // Mermaid sometimes injects extraneous whitespace/newlines into labels
+                        labelText = labelText.trim();
+                    }
+                    break;
+                }
+            }
+
+            // 4. Pass the dual-argument payload to Python
+            window.pythonBackend.node_clicked(nodeId, labelText);
+        };
+
+        window.reRenderGraph = async function(newGraphText) {
+            const container = document.querySelector('.mermaid');
+            try {
+                // 1. Revert the container strictly to raw text, destroying the old SVG
+                container.textContent = newGraphText;
+
+                // 2. Remove the internal flag that prevents Mermaid from re-processing the div
+                container.removeAttribute('data-processed');
+
+                // 3. Trigger the native rendering pipeline on the specific container
+                await window.mermaid.run({
+                    nodes: [container]
+                });
+
+            } catch (error) {
+                console.error("Mermaid re-render failed:", error);
+            }
+        };
+        </script>
+    </body>
+    </html>
+    """)
+#@+node:ekr.20260924082334.1: ** COPY: class MermaidEventHandler
+class MermaidEventHandler(QObject):
+    
+    @pyqtSlot(str, str)
+    def node_clicked(self, node_id, label):
+        
+        controller = self.controller
+        menu = QMenu()
+        
+        if controller.moving:
+            controller.move_node2(node_id, label)
+            controller.moving = False
+            return
+
+        # Incorporate both the internal ID and the visible label
+        delete = move = None
+        if node_id != controller.root_id:
+            delete = menu.addAction('Delete this node')
+        insert = menu.addAction('Insert child node')
+        if node_id != controller.root_id:
+            move = menu.addAction('Move this node')
+        rename = menu.addAction('Rename this node')
+        menu.addSeparator()
+        menu.addAction("Cancel")
+
+        action = menu.exec(QCursor.pos())
+        if not action:
+            return
+        try:
+            if action == delete:
+                controller.delete_node(node_id, label)
+            elif action == insert:
+                controller.insert_node(node_id, label)
+            elif action == move:
+                controller.move_node(node_id, label)
+            elif action == rename:
+                controller.rename_node(node_id, label)
+        except Exception:
+            g.app.permanentScriptDict['demo'] = None
+            g.es_exception()
+
+#@+node:ekr.20260924082503.1: ** COPY: class LeoController
+class LeoController:
+
+    << define content >>
+    << define html_template >>
+    root_id = 'Root'
+    n_nodes = 0
+    id_dict: dict[str, str] = {}  # For uAs.
+    moving = False
+    
+    def __init__(self, c: Cmdr) -> None:
+        self.c = c
+
+    @others
+#@+node:ekr.20260924082503.2: *3* << define content >>
+content = textwrap.dedent("""
+graph TD
+    Root[Root]
+    click Root call pyCallback()
+""").lstrip()
+#@+node:ekr.20260924082503.3: *3* << define html_template >>
+html_template = (
+    """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <!-- Inline Qt WebChannel Script -->
+        <script>webchannel_script</script>
+
+        <script type="module">
+            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+            mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+            
+            // Explicitly attach to the global namespace
+            window.mermaid = mermaid;
+        </script>
+
+    </head>
+    <body>
+        <div class="mermaid">
+            mermaid_content
+        </div>
+
+        <script>
+        window.pyCallback = function(nodeId) {
+            if (window.pythonBackend) {
+                window.pythonBackend.node_clicked(nodeId);
+            } else {
+                console.error("IPC bridge not ready.");
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof qt !== 'undefined' && qt.webChannelTransport) {
+                new QWebChannel(qt.webChannelTransport, function(channel) {
+                    window.pythonBackend = channel.objects.mermaid_bridge;
+                });
+            }
+        });
+
+        window.pyCallback = function(nodeId) {
+            if (!window.pythonBackend) {
+                console.error("IPC bridge not ready.");
+                return;
+            }
+
+            let labelText = "Label Extraction Failed";
+
+            // 1. Locate all rendered flowchart nodes
+            let svgNodes = document.querySelectorAll('.node');
+
+            // 2. Iterate to find the exact node ID match
+            for (let i = 0; i < svgNodes.length; i++) {
+                let svgNode = svgNodes[i];
+
+                // Split the dynamically generated DOM ID on hyphens. 
+                // This prevents false substring matches (e.g., node "A" matching node "AB").
+                let idSegments = svgNode.id.split('-');
+
+                if (svgNode.id === nodeId || idSegments.includes(nodeId)) {
+                    // 3. Target the specific class Mermaid assigns to HTML labels
+                    let labelElement = svgNode.querySelector('.nodeLabel');
+
+                    if (labelElement) {
+                        // Extract purely the text, stripping any embedded HTML
+                        labelText = labelElement.textContent || labelElement.innerText;
+
+                        // Mermaid sometimes injects extraneous whitespace/newlines into labels
+                        labelText = labelText.trim();
+                    }
+                    break;
+                }
+            }
+
+            // 4. Pass the dual-argument payload to Python
+            window.pythonBackend.node_clicked(nodeId, labelText);
+        };
+
+        window.reRenderGraph = async function(newGraphText) {
+            const container = document.querySelector('.mermaid');
+            try {
+                // 1. Revert the container strictly to raw text, destroying the old SVG
+                container.textContent = newGraphText;
+
+                // 2. Remove the internal flag that prevents Mermaid from re-processing the div
+                container.removeAttribute('data-processed');
+
+                // 3. Trigger the native rendering pipeline on the specific container
+                await window.mermaid.run({
+                    nodes: [container]
+                });
+
+            } catch (error) {
+                console.error("Mermaid re-render failed:", error);
+            }
+        };
+        </script>
+    </body>
+    </html>
+    """)
+#@+node:ekr.20260924082503.4: *3* LC.delete_node
+def delete_node(self, node_id: str, label: str) -> None:
+
+    if node_id == self.root_id:
+        g.es_print('Can not delete the root node', color='red')
+        return
+    lines = g.splitLines(self.content)
+    # Find the parents of the to-be-deleted node.
+    parent_pattern = re.compile(rf"\s*(\w+)\[(.*?)\]\s*-->\s*{node_id}\[{label}\]")
+    parents = []
+    for s in lines:
+        if m := parent_pattern.match(s):
+            parents.append((m.group(1), m.group(2)))
+    # g.trace(f"{parents=}")
+    # Find children of the to-be-deleted node.
+    child_pattern = re.compile(rf"^\s*{node_id}\[{label}\] --> (\w+)\s*\[")
+    children = []
+    for s in lines:
+        if m := child_pattern.match(s):
+            children.append(m.group(1))
+    # Switch links from the parent to all the children.
+    for parent_tuple in parents:
+        parent_id, parent_label = parent_tuple
+        for child in children:
+            link_from_pattern = re.compile(rf"^\s*{node_id}\[{label}\] --> (\w+)\s*\[(.*?)\]")
+            for i, s in enumerate(lines):
+                if m := link_from_pattern.match(s):
+                    lines[i] = f"    {parent_id}[{parent_label}] --> {m.group(1)}[{m.group(2)}]\n"
+                    break
+    # Remove all references to the deleted node.
+    node_pattern = re.compile(rf"^\s*{node_id}\s*\[{label}\]")
+    click_pattern = re.compile(rf"^\s*click\s+{node_id}\s*call")
+    link_to_pattern = re.compile(rf"^(.*?)-->\s*{node_id}")
+    result = []
+    for s in lines:
+        if not s.strip():
+            continue  # Delete blank lines.
+        if node_pattern.match(s):
+            continue  # Delete the node itself.
+        if click_pattern.match(s):
+            continue  # Delete the node itself.
+        m = link_to_pattern.match(s)
+        if m:  # Delete the link to the node.
+            new_line = m.group(1).rstrip() + '\n'
+            if new_line not in result:
+                result.append(new_line)
+            continue  
+        result.append(s)
+    # Update and refresh.
+    self.content = ''.join(result)
+    self.refresh()
+#@+node:ekr.20260924082503.5: *3* LC.get_content
+def get_content(self) -> str:
+    """Return the mermaid content corresponding to the 'planning-root' node."""
+    h = 'planning-root'
+    root = g.findNodeAnywhere(c, h)
+    if not root:
+        g.trace(f"Not found: {h}")
+        g.app.permanentScriptDict['demo'] = None
+        return
+        
+    result = ['graph TD\n']
+        
+    def add_link(parent_id: str, parent_h: str, child_id: str, child_h: str) -> None:
+        result.append(f"    {parent_id}[{parent_h}] --> {child_id}[{child_h}]\n")
+        
+    def add_node(p: Position) -> str:
+        n = self.n_nodes
+        new_id = 'Root' if p == root else f"Node{n}"
+        self.n_nodes += 1
+        self.id_dict[new_id] = p.v.gnx
+        result.append(f"    {new_id}[{p.h}]\n")
+        result.append(f"    click {new_id} call pyCallback()\n")
+        return new_id
+        
+    def build(parent: Position, parent_id: str, p: Position) -> None:
+        p_id = add_node(p)
+        if parent:
+            add_link(parent_id, parent.h, p_id, p.h)
+        for child in p.children():
+            build(p, p_id, child)
+
+    build(None, '', root)
+    # g.printObj(result)
+    return ''.join(result)
+#@+node:ekr.20260924082503.6: *3* LC.get_new_id
+def get_new_id(self) -> str:
+    """Get a new node index"""
+    t = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
+    return f"{g.app.leoID}:{t}"
+#@+node:ekr.20260924082503.7: *3* LC.insert_node
+def insert_node(self, node_id: str, label: str) -> None:
+    n = self.n_nodes
+    new_id = f"Node{n}"
+    self.n_nodes += 1
+    self.id_dict[new_id] = self.get_new_id()
+    result = g.splitLines(self.content)
+    result.append(f"    {node_id}[{label}] --> {new_id}[Node {n}]\n")
+    result.append(f"    click {new_id} call pyCallback()\n")
+    self.content = ''.join(result)
+    self.refresh()
+#@+node:ekr.20260924082503.8: *3* LC.move_node & move_node2
+def move_node(self, node_id: str, label: str) -> None:
+    
+    if node_id == self.root_id:
+        g.es_print('Can not move the root node', color='red')
+        return
+    self.moving = True
+    g.es_print('Select the new parent')
+
+def move_node2(self, node_id: stri, label: str) -> None:
+    g.trace(node_id, label)
+    self.moving = False
+#@+node:ekr.20260924082503.9: *3* LC.refresh
+def refresh(self) -> None:
+    """Update the screen."""
+    
+    # Don't sort lines: it changes screen order.
+    #   lines = g.splitLines(self.content)
+    #   self.content = ''.join([lines[0]] + list(sorted(lines[1:])))
+    
+    g.printObj(self.content, tag='refresh')
+            
+    # Escape backticks and backslashes to prevent JS syntax errors
+    escaped_string = self.content.replace('\\', '\\\\').replace('`', '\\`')
+    
+    # Execute the JS function asynchronously
+    self.view.page().runJavaScript(f"window.reRenderGraph(`{escaped_string}`);")
+#@+node:ekr.20260924082503.10: *3* LC.rename_dialog
+def rename_dialog(self, old_name: str) -> str:
+    """Put up a dialog asking for a node's name"""
+    dialog = QInputDialog()
+    dialog.setWindowTitle('Rename node')
+    dialog.setLabelText(f"New name for {old_name}:")
+    dialog.raise_()
+    ok = dialog.exec()
+    return str(dialog.textValue()) if ok else ''
+
+#@+node:ekr.20260924082503.11: *3* LC.rename_node
+def rename_node(self, node_id: str, label: str) -> None:
+    """Rename the given node."""
+    new_name = self.rename_dialog(label)
+    if not new_name:
+        return
+    node_pattern = re.compile(rf"^\s*{node_id}\[{label}\]\n")
+    link_from_pattern = re.compile(rf"^\s*{node_id}\[{label}\]\s*-->\s*(\w+)\[(.*?)\]")
+    link_to_pattern = re.compile(rf"^(.*?)-->\s*{node_id}\[{label}\]")
+    result = []
+    ws = ' '*4
+    for s in g.splitLines(self.content):
+        m = node_pattern.match(s)
+        if m:
+            result.append(f"{ws}{node_id}[{new_name}]\n")
+            continue
+        m = link_from_pattern.match(s)
+        if m:
+            result.append(f"{ws}{node_id}[{new_name}] --> {m.group(1)}[{m.group(2)}]\n")
+            continue
+        m = link_to_pattern.match(s)
+        if m:
+            result.append(f"{ws}{m.group(1).strip()} --> {node_id}[{new_name}]\n")
+            continue
+        result.append(s)
+    # Update and refresh.
+    self.content = ''.join(result)
+    self.refresh()
+#@+node:ekr.20260924082503.12: *3* LC.update_content
+def update_content(self) -> str:
+    self.content = self.get_content()
+    g.printObj(self.content)
+    return (
+        self.html_template
+        .replace('webchannel_script', webchannel_script)
+        .replace('mermaid_content', self.content)
+    )
+#@-all
+#@-leo

@@ -1,0 +1,27 @@
+.. @+leo-ver=5-thin
+.. @+node:ekr.20260924114633.1: * @file planning_root.txt
+.. @@language rest
+.. @+all
+.. @+node:ekr.20260924042736.1: ** planning-root
+@language rest
+@wrap
+
+.. @+node:ekr.20260924042736.2: *3* @section: steel
+.. @+node:ekr.20260924042736.3: *3* @lane: software engineers
+.. @+node:ekr.20260924042736.4: *3* @task blah blah
+blah blah
+.. @+node:ekr.20260924042736.5: *4* @task: buy tone: ne
+:task: Two cases of toner.
+
+:name: Jack T. Ripper
+
+:time: 20 days.
+
+:cost: 
+
+.. @+node:ekr.20260924042736.6: *5* @square
+.. @+node:ekr.20260924042736.7: *4* @square: s
+.. @+node:ekr.20260924042736.8: *4* @sqaure: se
+.. @+node:ekr.20260924042736.9: *4* @square: sw
+.. @-all
+.. @-leo
