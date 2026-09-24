@@ -4,7 +4,7 @@
 
 
 # @+others
-# @+node:ekr.20260922175054.5: ** @command flow-chart
+# @+node:ekr.20260922175054.5: ** @button flow-chart
 # @@language python
 
 """Mermaid demo"""

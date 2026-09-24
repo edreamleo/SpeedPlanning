@@ -6,6 +6,7 @@
 @language rest
 @wrap
 
+.. @+node:ekr.20260924120140.1: *3* A
 .. @+node:ekr.20260924042736.2: *3* @section: steel
 .. @+node:ekr.20260924042736.3: *3* @lane: software engineers
 .. @+node:ekr.20260924042736.4: *3* @task blah blah
