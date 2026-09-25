@@ -17,6 +17,7 @@
 </v>
 <v t="ekr.20260923042421.1"><vh>@button backup</vh></v>
 <v t="ekr.20260924050522.1"><vh>@button kill-flow-chart</vh></v>
+<v t="ekr.20260925084334.1"><vh>@button kill-gantt-chart</vh></v>
 </v>
 <v t="ekr.20260925080653.1"><vh>Files...</vh>
 <v t="ekr.20260924114454.1"><vh>@file attic.txt</vh></v>
@@ -331,7 +332,7 @@ graph TD
 </t>
 <t tx="ekr.20260924042736.6"></t>
 <t tx="ekr.20260924042736.7"></t>
-<t tx="ekr.20260924050522.1">g.app.permanentScriptDict['demo'] = None</t>
+<t tx="ekr.20260924050522.1">g.app.permanentScriptDict['flow-chart'] = None</t>
 <t tx="ekr.20260924121154.1"># These settings control ruff format, which is compatible with black.</t>
 <t tx="ekr.20260924121154.2"># True: beautify all @&lt;file&gt; nodes in the outline using Leo's token-based beautifier.
 # True can result in much slower writes.</t>
@@ -514,5 +515,6 @@ from leo.core import leoGlobals as g
 
 
 </t>
+<t tx="ekr.20260925084334.1">g.app.permanentScriptDict['gantt-chart'] = None</t>
 </tnodes>
 </leo_file>
