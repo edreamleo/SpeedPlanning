@@ -80,6 +80,8 @@ The algorithm uses a network diagram to map project activities, their durations,
 
 **Path Identification**: Identifies the continuous chain of tasks that have zero float, which forms the critical path. Any delay on this path delays the entire project.
 .. @+node:ekr.20260923130208.1: *3* Critical path algorithm
+@language python
+
 class Task:
     def __init__(self, name, duration):
         self.name = name
@@ -173,6 +175,8 @@ if __name__ == "__main__":
         
     print(f"\nCritical Path: {' -> '.join(path)}")
 .. @+node:ekr.20260922175054.3: *3* Works: mermaid gantt in Qt
+@language python
+
 from PyQt6.QtCore import QUrl
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 
