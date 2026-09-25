@@ -36,6 +36,7 @@ flowchart_template = """
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
         mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
