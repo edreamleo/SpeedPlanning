@@ -36,9 +36,6 @@ html_template = """
     <!DOCTYPE html>
     <html>
     <head>
-        <!-- Inline Qt WebChannel Script -->
-        <script>webchannel_script</script>
-
         <script type="module">
             import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
             mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
@@ -46,7 +43,6 @@ html_template = """
             // Explicitly attach to the global namespace
             window.mermaid = mermaid;
         </script>
-
     </head>
     <body>
         <div class="mermaid">
@@ -54,61 +50,6 @@ html_template = """
         </div>
 
         <script>
-        
-        window.pyCallback = function(nodeId) {
-            if (window.pythonBackend) {
-                window.pythonBackend.node_clicked(nodeId);
-            } else {
-                // console.error("IPC bridge not ready. 2");
-            }
-        };
-
-        document.addEventListener("DOMContentLoaded", function() {
-            if (typeof qt !== 'undefined' && qt.webChannelTransport) {
-                new QWebChannel(qt.webChannelTransport, function(channel) {
-                    window.pythonBackend = channel.objects.mermaid_bridge;
-                });
-            }
-        });
-
-        window.pyCallback = function(nodeId) {
-            if (!window.pythonBackend) {
-                // console.error("IPC bridge not ready. 3");
-                return;
-            }
-
-            let labelText = "Label Extraction Failed";
-
-            // 1. Locate all rendered flowchart nodes
-            let svgNodes = document.querySelectorAll('.node');
-
-            // 2. Iterate to find the exact node ID match
-            for (let i = 0; i < svgNodes.length; i++) {
-                let svgNode = svgNodes[i];
-
-                // Split the dynamically generated DOM ID on hyphens. 
-                // This prevents false substring matches (e.g., node "A" matching node "AB").
-                let idSegments = svgNode.id.split('-');
-
-                if (svgNode.id === nodeId || idSegments.includes(nodeId)) {
-                    // 3. Target the specific class Mermaid assigns to HTML labels
-                    let labelElement = svgNode.querySelector('.nodeLabel');
-
-                    if (labelElement) {
-                        // Extract purely the text, stripping any embedded HTML
-                        labelText = labelElement.textContent || labelElement.innerText;
-
-                        // Mermaid sometimes injects extraneous whitespace/newlines into labels
-                        labelText = labelText.trim();
-                    }
-                    break;
-                }
-            }
-
-            // 4. Pass the dual-argument payload to Python
-            window.pythonBackend.node_clicked(nodeId, labelText);
-        };
-
         window.reRenderGraph = async function(newGraphText) {
             const container = document.querySelector('.mermaid');
             try {
