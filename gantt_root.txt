@@ -15,5 +15,7 @@ User testing         :testing, after proto, 7d
 .. @+node:ekr.20260925091130.2: *3* Launch
 Marketing campaign   :marketing, after proto, 14d
 Release day          :milestone, after testing, 0d
+.. @+node:ekr.20260925121941.1: *3* Celebrate
+Celebration day     :milestone, after marketing, 7d
 .. @-all
 .. @-leo
