@@ -38,43 +38,42 @@
 </v>
 <v t="ekr.20260922175054.5"><vh>@button flow-chart</vh>
 <v t="ekr.20260922175054.6"><vh>&lt;&lt; flow-chart: imports &gt;&gt;</vh></v>
-<v t="ekr.20260922175054.9"><vh>&lt;&lt; create the webchannel script &gt;&gt;</vh></v>
-<v t="ekr.20260924040355.3"><vh>&lt;&lt; define html_template &gt;&gt;</vh></v>
-<v t="ekr.20260924040355.1"><vh>class LeoController</vh>
+<v t="ekr.20260924040355.3"><vh>&lt;&lt; define flowchart template &gt;&gt;</vh></v>
+<v t="ekr.20260924040355.1"><vh>class FlowchartController</vh>
 <v t="ekr.20260924040355.2"><vh>&lt;&lt; define content &gt;&gt;</vh></v>
 <v t="ekr.20260924042054.1"><vh>LC.get_flowchart_content</vh></v>
-<v t="ekr.20260925075851.1"><vh>LC.get_gantt_content</vh></v>
 <v t="ekr.20260924040552.1"><vh>LC.update_flowchart_content</vh></v>
-<v t="ekr.20260925075813.1"><vh>LC.update_gantt_content</vh></v>
 </v>
-<v t="ekr.20260924035448.1"><vh>class MermaidWebView</vh></v>
+<v t="ekr.20260925082849.1"><vh>class FlowchartWebView</vh></v>
 </v>
 <v t="ekr.20260925080117.1"><vh>@button gantt-chart</vh>
-<v t="ekr.20260925080225.1"><vh>&lt;&lt; define gantt content &gt;&gt;</vh></v>
+<v t="ekr.20260925080838.1"><vh>&lt;&lt; gantt-chart: imports &gt;&gt;</vh></v>
+<v t="ekr.20260925080225.1"><vh>&lt;&lt; define gantt_template &gt;&gt;</vh></v>
+<v t="ekr.20260925081852.1"><vh>class GanttController</vh>
+<v t="ekr.20260925081852.4"><vh>LC.get_gantt_content (to do)</vh></v>
+<v t="ekr.20260925081852.6"><vh>LC.update_gantt_content</vh></v>
+</v>
+<v t="ekr.20260924035448.1"><vh>class GanttWebView</vh></v>
 </v>
 </vnodes>
 <tnodes>
-<t tx="ekr.20260922175054.5">@language python
-
-"""Mermaid demo"""
-
+<t tx="ekr.20260922175054.5">"""Create a mermaid flowchart from the 'planning-root' node."""
 &lt;&lt; flow-chart: imports &gt;&gt;
 g.cls()
-&lt;&lt; create the webchannel script &gt;&gt;
-&lt;&lt; define html_template &gt;&gt;
-
-
+&lt;&lt; define flowchart template &gt;&gt;
 @others
 
-view = g.app.permanentScriptDict.get('demo')
+key = 'flow-chart'
+view = g.app.permanentScriptDict.get(key)
 print(f"view? {bool(view)}")
 if not view:
-    g.app.permanentScriptDict['demo'] = view = MermaidWebView()
-controller = LeoController(c)
+    g.app.permanentScriptDict[key] = view = FlowchartWebView()
+controller = FlowchartController()
 controller.view = view
 view.setHtml(controller.update_flowchart_content('planning-root'))
 view.show()
 c.bodyWantsFocusNow()
+@language python
 </t>
 <t tx="ekr.20260922175054.6">import re
 import sys
@@ -97,14 +96,6 @@ if TYPE_CHECKING:
 
 
 </t>
-<t tx="ekr.20260922175054.9"># Bypass Chromium origin restrictions.
-js_file = QFile(":/qtwebchannel/qwebchannel.js")
-if not js_file.open(QIODevice.OpenModeFlag.ReadOnly):
-    raise RuntimeError("Failed to locate qwebchannel.js within Qt resources.")
-
-# The html references this script.
-webchannel_script = js_file.readAll().data().decode('utf-8')
-</t>
 <t tx="ekr.20260923042416.1"></t>
 <t tx="ekr.20260923042421.1">"""
 Back up this .leo file.
@@ -115,9 +106,10 @@ c.backup_helper(sub_dir='SpeedPlanning')
 
 @language python
 </t>
-<t tx="ekr.20260923042704.1">flow-chart</t>
+<t tx="ekr.20260923042704.1">gantt-chart
+flow-chart</t>
 <t tx="ekr.20260923042755.1"></t>
-<t tx="ekr.20260924035448.1">class MermaidWebView(QWebEngineView):
+<t tx="ekr.20260924035448.1">class GanttWebView(QWebEngineView):
     def __init__(self):
         super().__init__()
         self.setGeometry(50, 50, 700, 500)
@@ -125,21 +117,17 @@ c.backup_helper(sub_dir='SpeedPlanning')
     # Override the native Qt event handler
     def closeEvent(self, event: QCloseEvent):
 
-        g.app.permanentScriptDict['demo'] = None
+        g.app.permanentScriptDict[key] = None
         # Allow the window to close
         event.accept()
 
 
 </t>
-<t tx="ekr.20260924040355.1">class LeoController:
+<t tx="ekr.20260924040355.1">class FlowchartController:
     &lt;&lt; define content &gt;&gt;
     root_id = 'Root'
     n_nodes = 0
     id_dict: dict[str, str] = {}  # For uAs.
-    moving = False
-
-    def __init__(self, c: Cmdr) -&gt; None:
-        self.c = c
 
     @others
 
@@ -169,7 +157,7 @@ graph TD
     &lt;/head&gt;
     &lt;body&gt;
         &lt;div class="mermaid"&gt;
-            mermaid_content
+            flowchart_content
         &lt;/div&gt;
 
         &lt;script&gt;
@@ -250,14 +238,14 @@ graph TD
     &lt;/body&gt;
     &lt;/html&gt;
     """
+
+
 </t>
 <t tx="ekr.20260924040552.1">def update_flowchart_content(self, headline: str) -&gt; str:
     self.content = self.get_flowchart_content(headline)
     # g.printObj(self.content)
     g.trace(f"{self.content.count('\n')} lines")
-    return html_template.replace('webchannel_script', webchannel_script).replace(
-        'mermaid_content', self.content
-    )
+    return html_template.replace('flowchart_content', self.content)
 
 </t>
 <t tx="ekr.20260924042054.1">def get_flowchart_content(self, headline: str) -&gt; str:
@@ -353,17 +341,97 @@ graph TD
 # If not given, Leo's beautifier uses Leo's pyproject.toml file.
 </t>
 <t tx="ekr.20260924163445.1"></t>
-<t tx="ekr.20260925075813.1">def update_gantt_content(self, headline: str) -&gt; str:
-    self.content = self.get_gantt_content(headline)
-    # g.printObj(self.content)
-    g.trace(f"{self.content.count('\n')} lines")
-    return html_template.replace('webchannel_script', webchannel_script).replace(
-        'mermaid_content', self.content
-    )
+<t tx="ekr.20260925080117.1">"""Create a mermaid Gantt chart from the 'planning-root' node."""
+&lt;&lt; gantt-chart: imports &gt;&gt;
+g.cls()
+&lt;&lt; define gantt_template &gt;&gt;
+@others
+
+key = 'gantt-chart'
+view = g.app.permanentScriptDict.get(key)
+print(f"view? {bool(view)}")
+if not view:
+    g.app.permanentScriptDict['gantt-chart'] = view = GanttWebView()
+controller = GanttController()
+controller.view = view
+view.setHtml(controller.update_gantt_content('planning-root'))
+view.show()
+c.bodyWantsFocusNow()
+
+# view = QWebEngineView()
+# view.setHtml(html_content, QUrl("http://localhost"))
+# view.resize(800, 400)
+# view.show()
+# g.app.scriptDict['demo'] = view
+@language python
 
 </t>
-<t tx="ekr.20260925075851.1">def get_gantt_content(self, headline: str) -&gt; str:
+<t tx="ekr.20260925080225.1">gantt_template = """
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;style&gt;
+        body { margin: 0; padding: 20px; font-family: sans-serif; background: gray; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+    &lt;pre class="mermaid"&gt;
+        gantt_content
+    &lt;/pre&gt;
+
+    &lt;script type="module"&gt;
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        
+        mermaid.initialize({ 
+            startOnLoad: false, // Prevents premature parsing race conditions
+            securityLevel: 'loose' 
+        });
+        
+        // Explicitly trigger parsing once everything is mounted
+        document.addEventListener('DOMContentLoaded', async () =&gt; {
+            await mermaid.run();
+        });
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+"""
+
+
+</t>
+<t tx="ekr.20260925080653.1"></t>
+<t tx="ekr.20260925080838.1">import textwrap
+
+from PyQt6.QtCore import QUrl
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+
+from leo.core import leoGlobals as g
+
+</t>
+<t tx="ekr.20260925081852.1">class GanttController:
+    @others
+
+
+</t>
+<t tx="ekr.20260925081852.4">def get_gantt_content(self, headline: str) -&gt; str:
     """Return the mermaid Gantt content corresponding to the given node."""
+    if 1:  ### Temp.
+        return textwrap.dedent("""
+            gantt
+                title Product Launch Plan
+                dateFormat YYYY-MM-DD
+                section Planning
+                    Market research      :done, research, 2024-03-01, 10d
+                    Define requirements  :done, reqs, after research, 7d
+                section Build
+                    Design prototype     :active, proto, after reqs, 14d
+                    User testing         :testing, after proto, 7d
+                section Launch
+                    Marketing campaign   :marketing, after proto, 14d
+                    Release day          :milestone, after testing, 0d
+        """).lstrip()
+
     root = g.findNodeAnywhere(c, headline)
     if not root:
         g.trace(f"Not found: {headline}")
@@ -425,63 +493,26 @@ graph TD
     return ''.join(result)
 
 </t>
-<t tx="ekr.20260925080117.1">@language python
-
-from PyQt6.QtCore import QUrl
-from PyQt6.QtWebEngineWidgets import QWebEngineView
-
-&lt;&lt; define gantt content &gt;&gt;
-
-view = QWebEngineView()
-view.setHtml(html_content, QUrl("http://localhost"))
-view.resize(800, 400)
-view.show()
-g.app.scriptDict['demo'] = view
+<t tx="ekr.20260925081852.6">def update_gantt_content(self, headline: str) -&gt; str:
+    self.content = self.get_gantt_content(headline)
+    # g.printObj(self.content)
+    g.trace(f"{self.content.count('\n')} lines")
+    return gantt_template.replace('gantt_content', self.content)
 
 </t>
-<t tx="ekr.20260925080225.1">html_content = """
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;meta charset="UTF-8"&gt;
-    &lt;style&gt;
-        body { margin: 0; padding: 20px; font-family: sans-serif; background: gray; }
-    &lt;/style&gt;
-&lt;/head&gt;
-&lt;body&gt;
+<t tx="ekr.20260925082849.1">class FlowchartWebView(QWebEngineView):
+    def __init__(self):
+        super().__init__()
+        self.setGeometry(50, 50, 700, 500)
 
-    &lt;pre class="mermaid"&gt;
-        gantt
-        title Product Launch Plan
-        dateFormat YYYY-MM-DD
-        section Planning
-            Market research      :done, research, 2024-03-01, 10d
-            Define requirements  :done, reqs, after research, 7d
-        section Build
-            Design prototype     :active, proto, after reqs, 14d
-            User testing         :testing, after proto, 7d
-        section Launch
-            Marketing campaign   :marketing, after proto, 14d
-            Release day          :milestone, after testing, 0d
-    &lt;/pre&gt;
+    # Override the native Qt event handler
+    def closeEvent(self, event: QCloseEvent):
 
-    &lt;script type="module"&gt;
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-        
-        mermaid.initialize({ 
-            startOnLoad: false, // Prevents premature parsing race conditions
-            securityLevel: 'loose' 
-        });
-        
-        // Explicitly trigger parsing once everything is mounted
-        document.addEventListener('DOMContentLoaded', async () =&gt; {
-            await mermaid.run();
-        });
-    &lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-"""
+        g.app.permanentScriptDict[key] = None
+        # Allow the window to close
+        event.accept()
+
+
 </t>
-<t tx="ekr.20260925080653.1"></t>
 </tnodes>
 </leo_file>

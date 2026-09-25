@@ -261,5 +261,13 @@ def update_content(self, new_content: str = '') -> str:
         .replace('webchannel_script', webchannel_script)
         .replace('mermaid_content', self.content)
     )
+#@+node:ekr.20260922175054.9: ** << create the webchannel script >>
+# Bypass Chromium origin restrictions.
+js_file = QFile(":/qtwebchannel/qwebchannel.js")
+if not js_file.open(QIODevice.OpenModeFlag.ReadOnly):
+    raise RuntimeError("Failed to locate qwebchannel.js within Qt resources.")
+
+# The html references this script.
+webchannel_script = js_file.readAll().data().decode('utf-8')
 #@-all
 #@-leo
