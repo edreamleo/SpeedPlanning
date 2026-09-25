@@ -23,6 +23,7 @@
 <v t="ekr.20260924114454.1"><vh>@file attic.txt</vh></v>
 <v t="ekr.20260924114930.1"><vh>@file flowchart.py</vh></v>
 <v t="ekr.20260925080314.1"><vh>@file gantt.py</vh></v>
+<v t="ekr.20260925084610.1"><vh>@file gantt_root.txt</vh></v>
 <v t="ekr.20260924115347.1"><vh>@file notes.txt</vh></v>
 <v t="ekr.20260924114633.1"><vh>@file planning_root.txt</vh></v>
 </v>
@@ -37,6 +38,8 @@
 <v t="ekr.20260924042736.7"><vh>Task 2</vh></v>
 </v>
 </v>
+<v t="ekr.20260925084827.1"><vh>gantt-root</vh></v>
+<v t="ekr.20260925081852.4"><vh>LC.get_gantt_content (to do)</vh></v>
 <v t="ekr.20260922175054.5"><vh>@button flow-chart</vh>
 <v t="ekr.20260922175054.6"><vh>&lt;&lt; flow-chart: imports &gt;&gt;</vh></v>
 <v t="ekr.20260924040355.3"><vh>&lt;&lt; define flowchart template &gt;&gt;</vh></v>
@@ -51,7 +54,7 @@
 <v t="ekr.20260925080838.1"><vh>&lt;&lt; gantt-chart: imports &gt;&gt;</vh></v>
 <v t="ekr.20260925080225.1"><vh>&lt;&lt; define gantt_template &gt;&gt;</vh></v>
 <v t="ekr.20260925081852.1"><vh>class GanttController</vh>
-<v t="ekr.20260925081852.4"><vh>LC.get_gantt_content (to do)</vh></v>
+<v t="ekr.20260925081852.4"></v>
 <v t="ekr.20260925081852.6"><vh>LC.update_gantt_content</vh></v>
 </v>
 <v t="ekr.20260924035448.1"><vh>class GanttWebView</vh></v>
@@ -144,9 +147,6 @@ graph TD
     &lt;!DOCTYPE html&gt;
     &lt;html&gt;
     &lt;head&gt;
-        &lt;!-- Inline Qt WebChannel Script --&gt;
-        &lt;script&gt;webchannel_script&lt;/script&gt;
-
         &lt;script type="module"&gt;
             import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
             mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
@@ -154,7 +154,6 @@ graph TD
             // Explicitly attach to the global namespace
             window.mermaid = mermaid;
         &lt;/script&gt;
-
     &lt;/head&gt;
     &lt;body&gt;
         &lt;div class="mermaid"&gt;
@@ -162,61 +161,6 @@ graph TD
         &lt;/div&gt;
 
         &lt;script&gt;
-        
-        window.pyCallback = function(nodeId) {
-            if (window.pythonBackend) {
-                window.pythonBackend.node_clicked(nodeId);
-            } else {
-                // console.error("IPC bridge not ready. 2");
-            }
-        };
-
-        document.addEventListener("DOMContentLoaded", function() {
-            if (typeof qt !== 'undefined' &amp;&amp; qt.webChannelTransport) {
-                new QWebChannel(qt.webChannelTransport, function(channel) {
-                    window.pythonBackend = channel.objects.mermaid_bridge;
-                });
-            }
-        });
-
-        window.pyCallback = function(nodeId) {
-            if (!window.pythonBackend) {
-                // console.error("IPC bridge not ready. 3");
-                return;
-            }
-
-            let labelText = "Label Extraction Failed";
-
-            // 1. Locate all rendered flowchart nodes
-            let svgNodes = document.querySelectorAll('.node');
-
-            // 2. Iterate to find the exact node ID match
-            for (let i = 0; i &lt; svgNodes.length; i++) {
-                let svgNode = svgNodes[i];
-
-                // Split the dynamically generated DOM ID on hyphens. 
-                // This prevents false substring matches (e.g., node "A" matching node "AB").
-                let idSegments = svgNode.id.split('-');
-
-                if (svgNode.id === nodeId || idSegments.includes(nodeId)) {
-                    // 3. Target the specific class Mermaid assigns to HTML labels
-                    let labelElement = svgNode.querySelector('.nodeLabel');
-
-                    if (labelElement) {
-                        // Extract purely the text, stripping any embedded HTML
-                        labelText = labelElement.textContent || labelElement.innerText;
-
-                        // Mermaid sometimes injects extraneous whitespace/newlines into labels
-                        labelText = labelText.trim();
-                    }
-                    break;
-                }
-            }
-
-            // 4. Pass the dual-argument payload to Python
-            window.pythonBackend.node_clicked(nodeId, labelText);
-        };
-
         window.reRenderGraph = async function(newGraphText) {
             const container = document.querySelector('.mermaid');
             try {
@@ -232,7 +176,7 @@ graph TD
                 });
 
             } catch (error) {
-                console.error("Mermaid re-render failed:", error);
+                console.error("Flowchart re-render failed:", error);
             }
         };
         &lt;/script&gt;
@@ -358,12 +302,6 @@ controller.view = view
 view.setHtml(controller.update_gantt_content('planning-root'))
 view.show()
 c.bodyWantsFocusNow()
-
-# view = QWebEngineView()
-# view.setHtml(html_content, QUrl("http://localhost"))
-# view.resize(800, 400)
-# view.show()
-# g.app.scriptDict['demo'] = view
 @language python
 
 </t>
@@ -375,25 +313,38 @@ c.bodyWantsFocusNow()
     &lt;style&gt;
         body { margin: 0; padding: 20px; font-family: sans-serif; background: gray; }
     &lt;/style&gt;
+    &lt;script type="module"&gt;
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+        
+        // Explicitly attach to the global namespace
+        window.mermaid = mermaid;
+    &lt;/script&gt;
 &lt;/head&gt;
 &lt;body&gt;
-
     &lt;pre class="mermaid"&gt;
         gantt_content
     &lt;/pre&gt;
+    
+    &lt;script&gt;
+    window.reRenderGraph = async function(newGraphText) {
+        const container = document.querySelector('.mermaid');
+        try {
+            // 1. Revert the container strictly to raw text, destroying the old SVG
+            container.textContent = newGraphText;
 
-    &lt;script type="module"&gt;
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-        
-        mermaid.initialize({ 
-            startOnLoad: false, // Prevents premature parsing race conditions
-            securityLevel: 'loose' 
-        });
-        
-        // Explicitly trigger parsing once everything is mounted
-        document.addEventListener('DOMContentLoaded', async () =&gt; {
-            await mermaid.run();
-        });
+            // 2. Remove the internal flag that prevents Mermaid from re-processing the div
+            container.removeAttribute('data-processed');
+
+            // 3. Trigger the native rendering pipeline on the specific container
+            await window.mermaid.run({
+                nodes: [container]
+            });
+
+        } catch (error) {
+            console.error("Gantt re-render failed:", error);
+        }
+    };
     &lt;/script&gt;
 &lt;/body&gt;
 &lt;/html&gt;
@@ -516,5 +467,6 @@ from leo.core import leoGlobals as g
 
 </t>
 <t tx="ekr.20260925084334.1">g.app.permanentScriptDict['gantt-chart'] = None</t>
+<t tx="ekr.20260925084827.1"></t>
 </tnodes>
 </leo_file>

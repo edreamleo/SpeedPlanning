@@ -27,25 +27,38 @@ gantt_template = """
     <style>
         body { margin: 0; padding: 20px; font-family: sans-serif; background: gray; }
     </style>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+        
+        // Explicitly attach to the global namespace
+        window.mermaid = mermaid;
+    </script>
 </head>
 <body>
-
     <pre class="mermaid">
         gantt_content
     </pre>
+    
+    <script>
+    window.reRenderGraph = async function(newGraphText) {
+        const container = document.querySelector('.mermaid');
+        try {
+            // 1. Revert the container strictly to raw text, destroying the old SVG
+            container.textContent = newGraphText;
 
-    <script type="module">
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-        
-        mermaid.initialize({ 
-            startOnLoad: false, // Prevents premature parsing race conditions
-            securityLevel: 'loose' 
-        });
-        
-        // Explicitly trigger parsing once everything is mounted
-        document.addEventListener('DOMContentLoaded', async () => {
-            await mermaid.run();
-        });
+            // 2. Remove the internal flag that prevents Mermaid from re-processing the div
+            container.removeAttribute('data-processed');
+
+            // 3. Trigger the native rendering pipeline on the specific container
+            await window.mermaid.run({
+                nodes: [container]
+            });
+
+        } catch (error) {
+            console.error("Gantt re-render failed:", error);
+        }
+    };
     </script>
 </body>
 </html>
@@ -172,12 +185,6 @@ controller.view = view
 view.setHtml(controller.update_gantt_content('planning-root'))
 view.show()
 c.bodyWantsFocusNow()
-
-# view = QWebEngineView()
-# view.setHtml(html_content, QUrl("http://localhost"))
-# view.resize(800, 400)
-# view.show()
-# g.app.scriptDict['demo'] = view
 # @@language python
 
 # @-others

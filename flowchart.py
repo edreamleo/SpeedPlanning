@@ -65,7 +65,7 @@ html_template = """
                 });
 
             } catch (error) {
-                console.error("Mermaid re-render failed:", error);
+                console.error("Flowchart re-render failed:", error);
             }
         };
         </script>
