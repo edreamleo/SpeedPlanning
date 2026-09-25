@@ -21,12 +21,10 @@
 </v>
 <v t="ekr.20260925080653.1"><vh>Files...</vh>
 <v t="ekr.20260924114454.1"><vh>@file attic.txt</vh></v>
-<v t="ekr.20260924114930.1"><vh>@file flowchart.py</vh></v>
-<v t="ekr.20260925080314.1"><vh>@file gantt.py</vh></v>
-<v t="ekr.20260925084610.1"><vh>@file gantt_root.txt</vh></v>
-<v t="ekr.20260924115347.1"><vh>@file notes.txt</vh></v>
-<v t="ekr.20260924114633.1"><vh>@file planning_root.txt</vh></v>
+<v t="ekr.20260925173401.1"><vh>@file buttons.py</vh></v>
+<v t="ekr.20260924115347.1"><vh>@file roots.txt</vh></v>
 </v>
+<v t="ekr.20260925173700.1"><vh>Notes</vh></v>
 </vnodes>
 <tnodes>
 <t tx="ekr.20260923042416.1"></t>
@@ -39,7 +37,8 @@ c.backup_helper(sub_dir='SpeedPlanning')
 
 @language python
 </t>
-<t tx="ekr.20260923042704.1">gantt-chart
+<t tx="ekr.20260923042704.1">critical-path
+gantt-chart
 flow-chart</t>
 <t tx="ekr.20260923042755.1"></t>
 <t tx="ekr.20260924050522.1">g.app.permanentScriptDict['flow-chart'] = None</t>
@@ -53,5 +52,13 @@ flow-chart</t>
 </t>
 <t tx="ekr.20260925080653.1"></t>
 <t tx="ekr.20260925084334.1">g.app.permanentScriptDict['gantt-chart'] = None</t>
+<t tx="ekr.20260925173700.1">To do: design resource view.
+
+Repo: https://github.com/edreamleo/SpeedPlanning
+
+Qt WebEngine is based on the open-source Chromium project and uses the Blink rendering engine.
+
+All code based on this gemini conversation: https://share.gemini.google/pyz22WW3idU7
+</t>
 </tnodes>
 </leo_file>
