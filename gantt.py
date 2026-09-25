@@ -30,36 +30,12 @@ gantt_template = """
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
         mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
-        
-        // Explicitly attach to the global namespace
-        window.mermaid = mermaid;
     </script>
 </head>
 <body>
     <pre class="mermaid">
         gantt_content
     </pre>
-    
-    <script>
-    window.reRenderGraph = async function(newGraphText) {
-        const container = document.querySelector('.mermaid');
-        try {
-            // 1. Revert the container strictly to raw text, destroying the old SVG
-            container.textContent = newGraphText;
-
-            // 2. Remove the internal flag that prevents Mermaid from re-processing the div
-            container.removeAttribute('data-processed');
-
-            // 3. Trigger the native rendering pipeline on the specific container
-            await window.mermaid.run({
-                nodes: [container]
-            });
-
-        } catch (error) {
-            console.error("Gantt re-render failed:", error);
-        }
-    };
-    </script>
 </body>
 </html>
 """
