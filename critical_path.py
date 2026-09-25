@@ -46,9 +46,11 @@ class Task:
         self.slack = 0
 
     def __repr__(self):
+        pad2 = ' ' * 2
+        pad3 = ' ' * 3
         return (
-            f"Task({self.name}): ES:{self.es:2}, EF:{self.ef:2}, "
-            f"LS:{self.ls:2}, LF:{self.lf:2}, Slack:{self.slack:2}"
+            f"{pad2}{self.name}{pad3}{self.es:2}{pad2}{self.ef:2}"
+            f"{pad2}{self.ls:2}{pad2}{self.lf:2}{pad3}{self.slack:2}"
         )
 
 
@@ -122,7 +124,8 @@ data['E'].dependencies = [data['C'], data['D']]
 duration, path = calculate_critical_path(data)
 
 print(f"Total Project Duration: {duration} days\n")
-print("Task Details:")
+pad = ' ' * 2
+print(f"Task{pad}ES{pad}EF{pad}LS{pad}LF{pad}Slack")
 for name, task in data.items():
     print(task)
 print(f"\nCritical Path: {' -> '.join(path)}")
