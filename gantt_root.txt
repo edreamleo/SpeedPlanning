@@ -1,0 +1,8 @@
+.. @+leo-ver=5-thin
+.. @+node:ekr.20260925084610.1: * @file gantt_root.txt
+.. A Leo outline to generate a Mermaid Gantt chart.
+.. @@language rest
+.. @+all
+.. @+node:ekr.20260925084827.1: ** gantt-root
+.. @-all
+.. @-leo
