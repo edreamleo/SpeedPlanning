@@ -269,5 +269,54 @@ if not js_file.open(QIODevice.OpenModeFlag.ReadOnly):
 
 # The html references this script.
 webchannel_script = js_file.readAll().data().decode('utf-8')
+#@+node:ekr.20260924114719.1: ** Design notes (obsolete)
+@language rest
+@wrap
+
+=== Input program communicates with Leo
+
+It insert a new task at a given point in the flowchart pane and
+a magic script inserts an @task node in the proper place in the Leo outine.
+
+=== Listener in Leo: listens for new tasks.
+
+Update button: update (magically) creates three different web pages using one or more tasks.
+
+=== Output Visual (Big whiteboards == web pages)
+    
+Flowchart pane, updated by elicitator. Data flows to Leo outline
+Gantt chart
+Resource spreadsheet
+
+Export to Jira:
+    
+Kanban (almost a subsection of Agile)
+Agile
+Waterfall
+
+=== Every task has name, description, resource list, length of time.
+
+Dropdown list only for resource list.
+Everything else entered on keyboard.
+Usually only the name of the task.
+
+=== If leo-web were an electron app would fix all file access problems.
+
+We don't want an electron app because we want Python scripting.
+
+=== Remote control might be part of the mix.
+
+=== The real value is dynamic.
+
+Dynamism create excitement & clarity.
+Speed is important.
+Elicitation method guides the CEO. The CEO's clarity creates the tasks.
+The instant feedback makes the whole project seem more real.
+Everybody wants to contribute. Hands go up.
+Part of value added is all the infrastruction.
+
+=== Jira has plugin system.
+
+Could be standalone or Jira plugin.
 #@-all
 #@-leo

@@ -1,0 +1,46 @@
+.. @+leo-ver=5-thin
+.. @+node:ekr.20260924115347.1: * @file roots.txt
+.. Source outlines for all charts.
+
+.. @@language rest
+.. @@wrap
+.. @@nosearch
+.. @+all
+.. @+node:ekr.20260925084827.1: ** gantt-root
+.. @+node:ekr.20260925091127.1: *3* Planning
+Market research      :done, research, 2024-03-01, 10d
+Define requirements  :done, reqs, after research, 7d
+               
+.. @+node:ekr.20260925091130.1: *3* Build
+Design prototype     :active, proto, after reqs, 14d
+User testing         :testing, after proto, 7d
+                
+.. @+node:ekr.20260925091130.2: *3* Launch
+Marketing campaign   :marketing, after proto, 14d
+Release day          :milestone, after testing, 0d
+.. @+node:ekr.20260925121941.1: *3* Celebrate
+Celebration day     :milestone, after marketing, 7d
+.. @+node:ekr.20260924042736.1: ** planning-root
+@language rest
+@wrap
+
+.. @+node:ekr.20260924042736.2: *3* Section: steel
+Line 1
+.. @+node:ekr.20260924042736.3: *3* Lane: software engineers
+.. @+node:ekr.20260924042736.4: *3* Group
+Group text
+.. @+node:ekr.20260924042736.5: *4* Task 1
+:task: Two cases of toner.
+
+:name: Jack T. Ripper
+
+:time: 20 days.
+
+:cost: 
+
+.. @+node:ekr.20260924042736.6: *5* Task 1.1
+.. @+node:ekr.20260924163445.1: *5* Task 1.2
+.. @+node:ekr.20260924042736.7: *4* Task 2
+.. @-all
+
+.. @-leo
