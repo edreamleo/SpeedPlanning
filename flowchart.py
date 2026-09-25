@@ -176,13 +176,26 @@ class LeoController:
             g.app.permanentScriptDict['demo'] = None
             return
 
-        result = ['graph TD\n']
-        ws = ' ' * 4
+        def center(s: str) -> str:
+            """Center justify s in the box"""
+            return f"<div style='text-align:center;'>{s.strip()}</div>"
+
+        def left(s: str) -> str:
+            """Left justify s in the box"""
+            return f"<div style='text-align:left;'>{s.rstrip()}</div>"
+
+        def body_lines(p: Position) -> list[str]:
+            """Return the desired lines of p.b."""
+            # For now, filter out Leo directives and :xxx: lines.
+            return [
+                z.rstrip() for z in g.splitLines(p.b)
+                if z.strip() and not z.strip().startswith(('@', ':'))
+            ]  # fmt: skip
 
         def h(p: Position) -> str:
             """Return the effective headline"""
-            lines = [z.rstrip() for z in g.splitLines(p.b) if z.strip()]
-            return f"{p.h.strip()} <br> <br> {' <br> '.join(lines)}{ws}" if lines else p.h
+            lines = body_lines(p)
+            return f"{center(p.h)} <br> {left(' <br> '.join(lines))}" if lines else p.h
 
         def add_link(parent: Position, parent_id: str, child: Position, child_id: str) -> None:
             result.append(f"{ws}{parent_id}[{h(parent)}] --> {child_id}[{h(child)}]\n")
@@ -193,10 +206,11 @@ class LeoController:
             self.n_nodes += 1
             self.id_dict[new_id] = p.v.gnx
             result.append(f"{ws}{new_id}[{h(p)}]\n")
-            if '<br>' in h(p):
-                result.append(f"{ws}style {new_id} text-align:left;")
             result.append(f"{ws}click {new_id} call pyCallback()\n")
             return new_id
+
+        result = ['graph TD\n']
+        ws = ' ' * 4
 
         def build(parent: Position, parent_id: str, p: Position) -> None:
             p_id = add_node(p)
@@ -205,6 +219,7 @@ class LeoController:
             for child in p.children():
                 build(p, p_id, child)
 
+        # Start the recursion.
         build(None, '', root)
         # g.printObj(result)
         return ''.join(result)
