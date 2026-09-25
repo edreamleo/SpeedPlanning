@@ -6,7 +6,7 @@
 class Controller:
     
     << define content >>
-    << define html_template >>
+    << define flowchart_template >>
     root_id = 'Root'
     n_nodes = 1
     id_dict: dict[str, str] = {}  # For uAs.
@@ -19,8 +19,8 @@ graph TD
     Root[Root]
     click Root call pyCallback()
 """).lstrip()
-#@+node:ekr.20260923040212.1: *3* << define html_template >>
-html_template = (
+#@+node:ekr.20260923040212.1: *3* << define flowchart_template >>
+flowchart_template = (
     """
     <!DOCTYPE html>
     <html>
@@ -257,7 +257,7 @@ def update_content(self, new_content: str = '') -> str:
     if new_content:
         self.content = new_content
     return (
-        self.html_template
+        self.flowchart_template
         .replace('webchannel_script', webchannel_script)
         .replace('mermaid_content', self.content)
     )

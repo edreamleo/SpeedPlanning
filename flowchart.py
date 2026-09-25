@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 g.cls()
 # @+<< define flowchart template >>
 # @+node:ekr.20260924040355.3: *3* << define flowchart template >>
-html_template = """
+flowchart_template = """
 <!DOCTYPE html>
 <html>
 <head>
@@ -135,7 +135,7 @@ class FlowchartController:
         self.content = self.get_flowchart_content(headline)
         # g.printObj(self.content)
         g.trace(f"{self.content.count('\n')} lines")
-        return html_template.replace('flowchart_content', self.content)
+        return flowchart_template.replace('flowchart_content', self.content)
 
     # @-others
 
