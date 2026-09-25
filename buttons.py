@@ -19,25 +19,17 @@ class Task:
         self.deps = []  # Dependencies
 
         # CPM Metrics
-        self.es = 0  # Early Start
-        self.ef = 0  # Early Finish
-        self.ls = 0  # Late Start
-        self.lf = 0  # Late Finish
+        self.es = 0  # Earliest Start
+        self.ef = 0  # Earliest Finish
+        self.ls = 0  # Latest Start
+        self.lf = 0  # Latest Finish
         self.slack = 0
-
-    def __repr__(self):
-        pad2 = ' ' * 2
-        pad3 = ' ' * 3
-        return (
-            f"{pad2}{self.name}{pad3}{self.es:2}{pad2}{self.ef:2}"
-            f"{pad2}{self.ls:2}{pad2}{self.lf:2}{pad3}{self.slack:2}"
-        )
 
 
 # @+node:ekr.20260925131750.1: *3* calculate_critical_path
-def calculate_critical_path(tasks):
+def calculate_critical_path(tasks: list[Task]) -> tuple[int, list[Task]]:
 
-    # Visit dependencies first.
+    # Sort the tasks: dependencies first.
     ordered_tasks = []
     visited = set()
 
@@ -73,13 +65,30 @@ def calculate_critical_path(tasks):
             task.lf = min(succ.ls for succ in successors)
         task.ls = task.lf - task.duration
 
-        # Calculate slack.
+        # Calculate the task's slack.
         task.slack = task.lf - task.ef
 
     # The critical path are those tasks with zero slack.
     critical_path = [task.name for task in ordered_tasks if task.slack == 0]
 
     return project_duration, critical_path
+
+
+# @+node:ekr.20260925183728.1: *3* report
+def report(duration: int, path: list[Task], tasks: list[task]) -> None:
+
+    print(f"Project Duration: {duration} days")
+    print()
+    print(f"Critical Path: {' -> '.join(path)}")
+    print()
+    pad2 = ' ' * 2
+    pad3 = ' ' * 3
+    print(f"Task Len{pad2}ES{pad2}EF{pad2}LS{pad2}LF{pad2}Slack")
+    for task in tasks:
+        print(
+            f"{pad2}{task.name}{pad3}{task.duration:2}{pad2}{task.es:2}{pad2}{task.ef:2}"
+            f"{pad2}{task.ls:2}{pad2}{task.lf:2}{pad3}{task.slack:2}"
+        )
 
 
 # @-others
@@ -102,12 +111,7 @@ e.deps = [c, d]
 duration, path = calculate_critical_path(tasks)
 
 # Report result.
-print(f"Total Project Duration: {duration} days\n")
-pad = ' ' * 2
-print(f"Task{pad}ES{pad}EF{pad}LS{pad}LF{pad}Slack")
-for task in tasks:
-    print(task)
-print(f"\nCritical Path: {' -> '.join(path)}")
+report(duration, path, tasks)
 
 # @@language python
 # @+node:ekr.20260922175054.5: ** @button flow-chart
