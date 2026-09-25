@@ -18,20 +18,12 @@
 <v t="ekr.20260923042421.1"><vh>@button backup</vh></v>
 <v t="ekr.20260924050522.1"><vh>@button kill-flow-chart</vh></v>
 </v>
-<v t="ekr.20260924115347.1"><vh>@file notes.txt</vh></v>
+<v t="ekr.20260925080653.1"><vh>Files...</vh>
 <v t="ekr.20260924114454.1"><vh>@file attic.txt</vh></v>
-<v t="ekr.20260924114633.1"><vh>@file planning_root.txt</vh></v>
 <v t="ekr.20260924114930.1"><vh>@file flowchart.py</vh></v>
-<v t="ekr.20260922175054.5"><vh>@button flow-chart</vh>
-<v t="ekr.20260922175054.6"><vh>&lt;&lt; flow-chart: imports &gt;&gt;</vh></v>
-<v t="ekr.20260922175054.9"><vh>&lt;&lt; create the webchannel script &gt;&gt;</vh></v>
-<v t="ekr.20260924040355.3"><vh>&lt;&lt; define html_template &gt;&gt;</vh></v>
-<v t="ekr.20260924040355.1"><vh>class LeoController</vh>
-<v t="ekr.20260924040355.2"><vh>&lt;&lt; define content &gt;&gt;</vh></v>
-<v t="ekr.20260924042054.1"><vh>LC.get_flowchart_content</vh></v>
-<v t="ekr.20260924040552.1"><vh>LC.update_flowchart_content</vh></v>
-</v>
-<v t="ekr.20260924035448.1"><vh>class MermaidWebView</vh></v>
+<v t="ekr.20260925080314.1"><vh>@file gantt.py</vh></v>
+<v t="ekr.20260924115347.1"><vh>@file notes.txt</vh></v>
+<v t="ekr.20260924114633.1"><vh>@file planning_root.txt</vh></v>
 </v>
 <v t="ekr.20260924042736.1"><vh>planning-root</vh>
 <v t="ekr.20260924042736.2"><vh>Section: steel</vh></v>
@@ -44,7 +36,22 @@
 <v t="ekr.20260924042736.7"><vh>Task 2</vh></v>
 </v>
 </v>
-<v t="ekr.20260924042054.1"></v>
+<v t="ekr.20260922175054.5"><vh>@button flow-chart</vh>
+<v t="ekr.20260922175054.6"><vh>&lt;&lt; flow-chart: imports &gt;&gt;</vh></v>
+<v t="ekr.20260922175054.9"><vh>&lt;&lt; create the webchannel script &gt;&gt;</vh></v>
+<v t="ekr.20260924040355.3"><vh>&lt;&lt; define html_template &gt;&gt;</vh></v>
+<v t="ekr.20260924040355.1"><vh>class LeoController</vh>
+<v t="ekr.20260924040355.2"><vh>&lt;&lt; define content &gt;&gt;</vh></v>
+<v t="ekr.20260924042054.1"><vh>LC.get_flowchart_content</vh></v>
+<v t="ekr.20260925075851.1"><vh>LC.get_gantt_content</vh></v>
+<v t="ekr.20260924040552.1"><vh>LC.update_flowchart_content</vh></v>
+<v t="ekr.20260925075813.1"><vh>LC.update_gantt_content</vh></v>
+</v>
+<v t="ekr.20260924035448.1"><vh>class MermaidWebView</vh></v>
+</v>
+<v t="ekr.20260925080117.1"><vh>@button gantt-chart</vh>
+<v t="ekr.20260925080225.1"><vh>&lt;&lt; define gantt content &gt;&gt;</vh></v>
+</v>
 </vnodes>
 <tnodes>
 <t tx="ekr.20260922175054.5">@language python
@@ -346,5 +353,135 @@ graph TD
 # If not given, Leo's beautifier uses Leo's pyproject.toml file.
 </t>
 <t tx="ekr.20260924163445.1"></t>
+<t tx="ekr.20260925075813.1">def update_gantt_content(self, headline: str) -&gt; str:
+    self.content = self.get_gantt_content(headline)
+    # g.printObj(self.content)
+    g.trace(f"{self.content.count('\n')} lines")
+    return html_template.replace('webchannel_script', webchannel_script).replace(
+        'mermaid_content', self.content
+    )
+
+</t>
+<t tx="ekr.20260925075851.1">def get_gantt_content(self, headline: str) -&gt; str:
+    """Return the mermaid Gantt content corresponding to the given node."""
+    root = g.findNodeAnywhere(c, headline)
+    if not root:
+        g.trace(f"Not found: {headline}")
+        g.app.permanentScriptDict['demo'] = None
+        return
+
+    def center(s: str) -&gt; str:
+        """Center justify s in the box"""
+        return f"&lt;div style='text-align:center;'&gt;{s.strip()}&lt;/div&gt;"
+
+    def left(s: str) -&gt; str:
+        """Left justify s in the box"""
+        return f"&lt;div style='text-align:left;'&gt;{s.rstrip()}&lt;/div&gt;"
+
+    def body_lines(p: Position) -&gt; list[str]:
+        """Return the desired lines of p.b."""
+        # For now, filter out blank lines, Leo directives, and :xxx: lines.
+        return [
+            z.rstrip() for z in g.splitLines(p.b)
+            if z.strip() and not z.strip().startswith(('@', ':'))
+        ]  # fmt: skip
+
+    def h(p: Position) -&gt; str:
+        """
+        Return the effective headline for the box corresponding to p.
+        *All* references to any node must use the *same* text!
+        """
+        lines = body_lines(p)
+        return f"{center(p.h)} &lt;br&gt; {left(' &lt;br&gt; '.join(lines))}" if lines else p.h
+
+    def add_link(parent: Position, parent_id: str, child: Position, child_id: str) -&gt; None:
+        """Add a link line to the mermaid sources"""
+        result.append(f"{ws}{parent_id}[{h(parent)}] --&gt; {child_id}[{h(child)}]\n")
+
+    def add_node(p: Position) -&gt; str:
+        """Add two lines to the mermaid sources that represent a node"""
+        n = self.n_nodes
+        new_id = 'Root' if p == root else f"Node{n}"
+        self.n_nodes += 1
+        self.id_dict[new_id] = p.v.gnx
+        result.append(f"{ws}{new_id}[{h(p)}]\n")
+        result.append(f"{ws}click {new_id} call pyCallback()\n")
+        return new_id
+
+    result = ['graph TD\n']
+    ws = ' ' * 4
+
+    def build(parent: Position, parent_id: str, p: Position) -&gt; None:
+        """Create the meraid source lines for the parent position and all its descendants"""
+        p_id = add_node(p)
+        if parent:
+            add_link(parent, parent_id, p, p_id)
+        for child in p.children():
+            build(p, p_id, child)
+
+    # Start the recursion.
+    build(None, '', root)
+    # g.printObj(result)
+    return ''.join(result)
+
+</t>
+<t tx="ekr.20260925080117.1">@language python
+
+from PyQt6.QtCore import QUrl
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+
+&lt;&lt; define gantt content &gt;&gt;
+
+view = QWebEngineView()
+view.setHtml(html_content, QUrl("http://localhost"))
+view.resize(800, 400)
+view.show()
+g.app.scriptDict['demo'] = view
+
+</t>
+<t tx="ekr.20260925080225.1">html_content = """
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;style&gt;
+        body { margin: 0; padding: 20px; font-family: sans-serif; background: gray; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+    &lt;pre class="mermaid"&gt;
+        gantt
+        title Product Launch Plan
+        dateFormat YYYY-MM-DD
+        section Planning
+            Market research      :done, research, 2024-03-01, 10d
+            Define requirements  :done, reqs, after research, 7d
+        section Build
+            Design prototype     :active, proto, after reqs, 14d
+            User testing         :testing, after proto, 7d
+        section Launch
+            Marketing campaign   :marketing, after proto, 14d
+            Release day          :milestone, after testing, 0d
+    &lt;/pre&gt;
+
+    &lt;script type="module"&gt;
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        
+        mermaid.initialize({ 
+            startOnLoad: false, // Prevents premature parsing race conditions
+            securityLevel: 'loose' 
+        });
+        
+        // Explicitly trigger parsing once everything is mounted
+        document.addEventListener('DOMContentLoaded', async () =&gt; {
+            await mermaid.run();
+        });
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+"""
+</t>
+<t tx="ekr.20260925080653.1"></t>
 </tnodes>
 </leo_file>
