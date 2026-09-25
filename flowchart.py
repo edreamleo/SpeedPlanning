@@ -198,9 +198,11 @@ class LeoController:
             return f"{center(p.h)} <br> {left(' <br> '.join(lines))}" if lines else p.h
 
         def add_link(parent: Position, parent_id: str, child: Position, child_id: str) -> None:
+            """Add a link line to the mermaid sources"""
             result.append(f"{ws}{parent_id}[{h(parent)}] --> {child_id}[{h(child)}]\n")
 
         def add_node(p: Position) -> str:
+            """Add two lines to the mermaid sources that represent a node"""
             n = self.n_nodes
             new_id = 'Root' if p == root else f"Node{n}"
             self.n_nodes += 1
@@ -213,6 +215,7 @@ class LeoController:
         ws = ' ' * 4
 
         def build(parent: Position, parent_id: str, p: Position) -> None:
+            """Create the meraid source lines for the parent position and all its descendants"""
             p_id = add_node(p)
             if parent:
                 add_link(parent, parent_id, p, p_id)
