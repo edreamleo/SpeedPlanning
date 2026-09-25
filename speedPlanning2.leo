@@ -28,8 +28,8 @@
 <v t="ekr.20260924040355.3"><vh>&lt;&lt; define html_template &gt;&gt;</vh></v>
 <v t="ekr.20260924040355.1"><vh>class LeoController</vh>
 <v t="ekr.20260924040355.2"><vh>&lt;&lt; define content &gt;&gt;</vh></v>
-<v t="ekr.20260924042054.1"><vh>LC.get_content</vh></v>
-<v t="ekr.20260924040552.1"><vh>LC.update_content</vh></v>
+<v t="ekr.20260924042054.1"><vh>LC.get_flowchart_content</vh></v>
+<v t="ekr.20260924040552.1"><vh>LC.update_flowchart_content</vh></v>
 </v>
 <v t="ekr.20260924035448.1"><vh>class MermaidWebView</vh></v>
 </v>
@@ -65,7 +65,7 @@ if not view:
     g.app.permanentScriptDict['demo'] = view = MermaidWebView()
 controller = LeoController(c)
 controller.view = view
-view.setHtml(controller.update_content())
+view.setHtml(controller.update_flowchart_content('planning-root'))
 view.show()
 c.bodyWantsFocusNow()
 </t>
@@ -244,8 +244,8 @@ graph TD
     &lt;/html&gt;
     """
 </t>
-<t tx="ekr.20260924040552.1">def update_content(self) -&gt; str:
-    self.content = self.get_content()
+<t tx="ekr.20260924040552.1">def update_flowchart_content(self, headline: str) -&gt; str:
+    self.content = self.get_flowchart_content(headline)
     # g.printObj(self.content)
     g.trace(f"{self.content.count('\n')} lines")
     return html_template.replace('webchannel_script', webchannel_script).replace(
@@ -253,12 +253,11 @@ graph TD
     )
 
 </t>
-<t tx="ekr.20260924042054.1">def get_content(self) -&gt; str:
-    """Return the mermaid content corresponding to the 'planning-root' node."""
-    h = 'planning-root'
-    root = g.findNodeAnywhere(c, h)
+<t tx="ekr.20260924042054.1">def get_flowchart_content(self, headline: str) -&gt; str:
+    """Return the mermaid flowchart content corresponding to the given node."""
+    root = g.findNodeAnywhere(c, headline)
     if not root:
-        g.trace(f"Not found: {h}")
+        g.trace(f"Not found: {headline}")
         g.app.permanentScriptDict['demo'] = None
         return
 

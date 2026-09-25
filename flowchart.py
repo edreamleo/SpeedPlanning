@@ -166,13 +166,12 @@ class LeoController:
         self.c = c
 
     # @+others
-    # @+node:ekr.20260924042054.1: *4* LC.get_content
-    def get_content(self) -> str:
-        """Return the mermaid content corresponding to the 'planning-root' node."""
-        h = 'planning-root'
-        root = g.findNodeAnywhere(c, h)
+    # @+node:ekr.20260924042054.1: *4* LC.get_flowchart_content
+    def get_flowchart_content(self, headline: str) -> str:
+        """Return the mermaid flowchart content corresponding to the given node."""
+        root = g.findNodeAnywhere(c, headline)
         if not root:
-            g.trace(f"Not found: {h}")
+            g.trace(f"Not found: {headline}")
             g.app.permanentScriptDict['demo'] = None
             return
 
@@ -230,9 +229,9 @@ class LeoController:
         # g.printObj(result)
         return ''.join(result)
 
-    # @+node:ekr.20260924040552.1: *4* LC.update_content
-    def update_content(self) -> str:
-        self.content = self.get_content()
+    # @+node:ekr.20260924040552.1: *4* LC.update_flowchart_content
+    def update_flowchart_content(self, headline: str) -> str:
+        self.content = self.get_flowchart_content(headline)
         # g.printObj(self.content)
         g.trace(f"{self.content.count('\n')} lines")
         return html_template.replace('webchannel_script', webchannel_script).replace(
@@ -264,7 +263,7 @@ if not view:
     g.app.permanentScriptDict['demo'] = view = MermaidWebView()
 controller = LeoController(c)
 controller.view = view
-view.setHtml(controller.update_content())
+view.setHtml(controller.update_flowchart_content('planning-root'))
 view.show()
 c.bodyWantsFocusNow()
 # @-others
