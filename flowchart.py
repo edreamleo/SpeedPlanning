@@ -186,7 +186,7 @@ class LeoController:
 
         def body_lines(p: Position) -> list[str]:
             """Return the desired lines of p.b."""
-            # For now, filter out Leo directives and :xxx: lines.
+            # For now, filter out blank lines, Leo directives, and :xxx: lines.
             return [
                 z.rstrip() for z in g.splitLines(p.b)
                 if z.strip() and not z.strip().startswith(('@', ':'))
