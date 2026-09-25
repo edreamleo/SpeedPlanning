@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 g.cls()
 # @+<< define flowchart template >>
 # @+node:ekr.20260924040355.3: *3* << define flowchart template >>
-flowchart_template = """
+flowchart_template = textwrap.dedent("""
 <!DOCTYPE html>
 <html>
 <head>
@@ -48,21 +48,13 @@ flowchart_template = """
     </div>
 </body>
 </html>
-"""
+""")
 
 
 # @-<< define flowchart template >>
 # @+others
 # @+node:ekr.20260924040355.1: *3* class FlowchartController
 class FlowchartController:
-    # @+<< define content >>
-    # @+node:ekr.20260924040355.2: *4* << define content >>
-    content = textwrap.dedent("""
-    graph TD
-        Root[Root]
-        click Root call pyCallback()
-    """).lstrip()
-    # @-<< define content >>
     root_id = 'Root'
     n_nodes = 0
     id_dict: dict[str, str] = {}  # For uAs.

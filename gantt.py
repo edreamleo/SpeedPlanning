@@ -19,7 +19,7 @@ from leo.core import leoGlobals as g
 g.cls()
 # @+<< define gantt_template >>
 # @+node:ekr.20260925080225.1: *3* << define gantt_template >>
-gantt_template = """
+gantt_template = textwrap.dedent("""
 <!DOCTYPE html>
 <html>
 <head>
@@ -38,7 +38,7 @@ gantt_template = """
     </pre>
 </body>
 </html>
-"""
+""")
 
 
 # @-<< define gantt_template >>
