@@ -38,15 +38,18 @@
 <v t="ekr.20260924042736.7"><vh>Task 2</vh></v>
 </v>
 </v>
-<v t="ekr.20260925084827.1"><vh>gantt-root</vh></v>
-<v t="ekr.20260925081852.4"><vh>LC.get_gantt_content (to do)</vh></v>
+<v t="ekr.20260925084827.1"><vh>gantt-root</vh>
+<v t="ekr.20260925091127.1"><vh>Planning</vh></v>
+<v t="ekr.20260925091130.1"><vh>Build</vh></v>
+<v t="ekr.20260925091130.2"><vh>Launch</vh></v>
+</v>
 <v t="ekr.20260922175054.5"><vh>@button flow-chart</vh>
 <v t="ekr.20260922175054.6"><vh>&lt;&lt; flow-chart: imports &gt;&gt;</vh></v>
 <v t="ekr.20260924040355.3"><vh>&lt;&lt; define flowchart template &gt;&gt;</vh></v>
 <v t="ekr.20260924040355.1"><vh>class FlowchartController</vh>
 <v t="ekr.20260924040355.2"><vh>&lt;&lt; define content &gt;&gt;</vh></v>
-<v t="ekr.20260924042054.1"><vh>LC.get_flowchart_content</vh></v>
-<v t="ekr.20260924040552.1"><vh>LC.update_flowchart_content</vh></v>
+<v t="ekr.20260924042054.1"><vh>FlowchartController.get_flowchart_content</vh></v>
+<v t="ekr.20260924040552.1"><vh>FlowchartController.update_flowchart_content</vh></v>
 </v>
 <v t="ekr.20260925082849.1"><vh>class FlowchartWebView</vh></v>
 </v>
@@ -54,11 +57,12 @@
 <v t="ekr.20260925080838.1"><vh>&lt;&lt; gantt-chart: imports &gt;&gt;</vh></v>
 <v t="ekr.20260925080225.1"><vh>&lt;&lt; define gantt_template &gt;&gt;</vh></v>
 <v t="ekr.20260925081852.1"><vh>class GanttController</vh>
-<v t="ekr.20260925081852.4"></v>
-<v t="ekr.20260925081852.6"><vh>LC.update_gantt_content</vh></v>
+<v t="ekr.20260925081852.4"><vh>GanttController.get_gantt_content</vh></v>
+<v t="ekr.20260925081852.6"><vh>GanttController.update_gantt_content</vh></v>
 </v>
 <v t="ekr.20260924035448.1"><vh>class GanttWebView</vh></v>
 </v>
+<v t="ekr.20260925081852.4"></v>
 </vnodes>
 <tnodes>
 <t tx="ekr.20260922175054.5">"""Create a mermaid flowchart from the 'planning-root' node."""
@@ -299,7 +303,7 @@ if not view:
     g.app.permanentScriptDict['gantt-chart'] = view = GanttWebView()
 controller = GanttController()
 controller.view = view
-view.setHtml(controller.update_gantt_content('planning-root'))
+view.setHtml(controller.update_gantt_content('gantt-root'))
 view.show()
 c.bodyWantsFocusNow()
 @language python
@@ -368,79 +372,24 @@ from leo.core import leoGlobals as g
 </t>
 <t tx="ekr.20260925081852.4">def get_gantt_content(self, headline: str) -&gt; str:
     """Return the mermaid Gantt content corresponding to the given node."""
-    if 1:  ### Temp.
-        return textwrap.dedent("""
-            gantt
-                title Product Launch Plan
-                dateFormat YYYY-MM-DD
-                section Planning
-                    Market research      :done, research, 2024-03-01, 10d
-                    Define requirements  :done, reqs, after research, 7d
-                section Build
-                    Design prototype     :active, proto, after reqs, 14d
-                    User testing         :testing, after proto, 7d
-                section Launch
-                    Marketing campaign   :marketing, after proto, 14d
-                    Release day          :milestone, after testing, 0d
-        """).lstrip()
-
     root = g.findNodeAnywhere(c, headline)
     if not root:
         g.trace(f"Not found: {headline}")
         g.app.permanentScriptDict['demo'] = None
         return
 
-    def center(s: str) -&gt; str:
-        """Center justify s in the box"""
-        return f"&lt;div style='text-align:center;'&gt;{s.strip()}&lt;/div&gt;"
-
-    def left(s: str) -&gt; str:
-        """Left justify s in the box"""
-        return f"&lt;div style='text-align:left;'&gt;{s.rstrip()}&lt;/div&gt;"
-
-    def body_lines(p: Position) -&gt; list[str]:
-        """Return the desired lines of p.b."""
-        # For now, filter out blank lines, Leo directives, and :xxx: lines.
-        return [
-            z.rstrip() for z in g.splitLines(p.b)
-            if z.strip() and not z.strip().startswith(('@', ':'))
-        ]  # fmt: skip
-
-    def h(p: Position) -&gt; str:
-        """
-        Return the effective headline for the box corresponding to p.
-        *All* references to any node must use the *same* text!
-        """
-        lines = body_lines(p)
-        return f"{center(p.h)} &lt;br&gt; {left(' &lt;br&gt; '.join(lines))}" if lines else p.h
-
-    def add_link(parent: Position, parent_id: str, child: Position, child_id: str) -&gt; None:
-        """Add a link line to the mermaid sources"""
-        result.append(f"{ws}{parent_id}[{h(parent)}] --&gt; {child_id}[{h(child)}]\n")
-
-    def add_node(p: Position) -&gt; str:
-        """Add two lines to the mermaid sources that represent a node"""
-        n = self.n_nodes
-        new_id = 'Root' if p == root else f"Node{n}"
-        self.n_nodes += 1
-        self.id_dict[new_id] = p.v.gnx
-        result.append(f"{ws}{new_id}[{h(p)}]\n")
-        result.append(f"{ws}click {new_id} call pyCallback()\n")
-        return new_id
-
-    result = ['graph TD\n']
     ws = ' ' * 4
+    result = [
+        'gantt\n',
+        f"{ws}title Product Launch Plan\n",
+        f"{ws}dateFormat YYYY-MM-DD\n",
+    ]
+    for p in root.subtree():
+        result.append(f"{ws}section {p.h.strip()}\n")
+        lines = [z.strip() for z in g.splitLines(p.b) if z.strip()]
+        for s in lines:
+            result.append(f"{ws}{ws}{s}\n")
 
-    def build(parent: Position, parent_id: str, p: Position) -&gt; None:
-        """Create the meraid source lines for the parent position and all its descendants"""
-        p_id = add_node(p)
-        if parent:
-            add_link(parent, parent_id, p, p_id)
-        for child in p.children():
-            build(p, p_id, child)
-
-    # Start the recursion.
-    build(None, '', root)
     # g.printObj(result)
     return ''.join(result)
 
@@ -468,5 +417,13 @@ from leo.core import leoGlobals as g
 </t>
 <t tx="ekr.20260925084334.1">g.app.permanentScriptDict['gantt-chart'] = None</t>
 <t tx="ekr.20260925084827.1"></t>
+<t tx="ekr.20260925091127.1">Market research      :done, research, 2024-03-01, 10d
+Define requirements  :done, reqs, after research, 7d
+               </t>
+<t tx="ekr.20260925091130.1">Design prototype     :active, proto, after reqs, 14d
+User testing         :testing, after proto, 7d
+                </t>
+<t tx="ekr.20260925091130.2">Marketing campaign   :marketing, after proto, 14d
+Release day          :milestone, after testing, 0d</t>
 </tnodes>
 </leo_file>

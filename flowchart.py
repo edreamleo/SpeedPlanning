@@ -91,7 +91,7 @@ class FlowchartController:
     id_dict: dict[str, str] = {}  # For uAs.
 
     # @+others
-    # @+node:ekr.20260924042054.1: *4* LC.get_flowchart_content
+    # @+node:ekr.20260924042054.1: *4* FlowchartController.get_flowchart_content
     def get_flowchart_content(self, headline: str) -> str:
         """Return the mermaid flowchart content corresponding to the given node."""
         root = g.findNodeAnywhere(c, headline)
@@ -154,7 +154,7 @@ class FlowchartController:
         # g.printObj(result)
         return ''.join(result)
 
-    # @+node:ekr.20260924040552.1: *4* LC.update_flowchart_content
+    # @+node:ekr.20260924040552.1: *4* FlowchartController.update_flowchart_content
     def update_flowchart_content(self, headline: str) -> str:
         self.content = self.get_flowchart_content(headline)
         # g.printObj(self.content)

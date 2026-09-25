@@ -70,7 +70,7 @@ gantt_template = """
 # @+node:ekr.20260925081852.1: *3* class GanttController
 class GanttController:
     # @+others
-    # @+node:ekr.20260925081852.4: *4* LC.get_gantt_content
+    # @+node:ekr.20260925081852.4: *4* GanttController.get_gantt_content
     def get_gantt_content(self, headline: str) -> str:
         """Return the mermaid Gantt content corresponding to the given node."""
         root = g.findNodeAnywhere(c, headline)
@@ -94,7 +94,7 @@ class GanttController:
         # g.printObj(result)
         return ''.join(result)
 
-    # @+node:ekr.20260925081852.6: *4* LC.update_gantt_content
+    # @+node:ekr.20260925081852.6: *4* GanttController.update_gantt_content
     def update_gantt_content(self, headline: str) -> str:
         self.content = self.get_gantt_content(headline)
         # g.printObj(self.content)
