@@ -1,5 +1,6 @@
 .. @+leo-ver=5-thin
 .. @+node:ekr.20260924114633.1: * @file planning_root.txt
+.. A Leo outline to generate a Mermaid flowchart.
 .. @@language rest
 .. @+all
 .. @+node:ekr.20260924042736.1: ** planning-root
