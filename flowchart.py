@@ -193,7 +193,10 @@ class LeoController:
             ]  # fmt: skip
 
         def h(p: Position) -> str:
-            """Return the effective headline"""
+            """
+            Return the effective headline for the box corresponding to p.
+            *All* references to any node must use the *same* text!
+            """
             lines = body_lines(p)
             return f"{center(p.h)} <br> {left(' <br> '.join(lines))}" if lines else p.h
 
