@@ -24,7 +24,6 @@
 <v t="ekr.20260925173401.1"><vh>@file buttons.py</vh></v>
 <v t="ekr.20260924115347.1"><vh>@file roots.txt</vh></v>
 </v>
-<v t="ekr.20260925173700.1"><vh>Notes</vh></v>
 </vnodes>
 <tnodes>
 <t tx="ekr.20260923042416.1"></t>
@@ -52,13 +51,5 @@ flow-chart</t>
 </t>
 <t tx="ekr.20260925080653.1"></t>
 <t tx="ekr.20260925084334.1">g.app.permanentScriptDict['gantt-chart'] = None</t>
-<t tx="ekr.20260925173700.1">To do: design resource view.
-
-Repo: https://github.com/edreamleo/SpeedPlanning
-
-Qt WebEngine is based on the open-source Chromium project and uses the Blink rendering engine.
-
-All code based on this gemini conversation: https://share.gemini.google/pyz22WW3idU7
-</t>
 </tnodes>
 </leo_file>
