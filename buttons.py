@@ -16,18 +16,23 @@ class Task:
     def __init__(self, name: str, duration: int) -> None:
         self.name = name
         self.duration = duration
-        self.deps = []  # Dependencies
+        # Tasks that this tasks depends on. They must all finish before this task can start.
+        self.deps = []
+        # Tasks that depend on *this* task. This task must finish before any of these can start.
+        self.successors = []
 
         # CPM Metrics
-        self.es = 0  # Earliest Start
-        self.ef = 0  # Earliest Finish
-        self.ls = 0  # Latest Start
-        self.lf = 0  # Latest Finish
-        self.slack = 0
+        self.es = -1  # Earliest Start
+        self.ef = -1  # Earliest Finish
+        self.ls = -1  # Latest Start
+        self.lf = -1  # Latest Finish
+        self.slack = -1
 
 
 # @+node:ekr.20260925131750.1: *3* calculate_critical_path
 def calculate_critical_path(tasks: list[Task]) -> tuple[int, list[Task]]:
+
+    trace = True
 
     # Sort the tasks: dependencies first.
     ordered_tasks = []
@@ -43,25 +48,39 @@ def calculate_critical_path(tasks: list[Task]) -> tuple[int, list[Task]]:
     for task in tasks:
         visit(task)
 
+    if True:
+        print('Ordered tasks, with deps:')
+        for z in ordered_tasks:
+            print(f"{z.name} [{','.join(z2.name for z2 in z.deps)}]")
+        print()
+
     # Forward Pass: Calculate ES and EF.
     for task in ordered_tasks:
-        if not task.deps:
-            task.es = 0
-        else:
-            task.es = max(dep.ef for dep in task.deps)
+        deps = task.deps
+        bad = [z.name for z in deps if z.ef == -1]
+        assert not bad, bad
+        task.es = max(dep.ef for dep in deps) if deps else 0
         task.ef = task.es + task.duration
 
     # Find total project duration.
-    project_duration = max(task.ef for task in ordered_tasks)
+    project_duration = max(task.ef for task in tasks)
+
+    # Calculate successors of all tasks.
+    for task in tasks:
+        task.successors = [z for z in tasks if task in z.deps]
+
+    if True:
+        print('Reversed ordered tasks, with successors:')
+        for z in reversed(ordered_tasks):
+            print(f"{z.name} [{','.join(z2.name for z2 in z.successors)}]")
+        print()
 
     # Backward Pass: Calculate LF and LS.
     for task in reversed(ordered_tasks):
-        # Find which tasks depend on the current task
-        successors = [t for t in ordered_tasks if task in t.deps]
-        if not successors:
-            task.lf = project_duration
-        else:
-            task.lf = min(succ.ls for succ in successors)
+        successors = task.successors
+        bad = [z.name for z in successors if z.lf == -1]
+        assert not bad, bad
+        task.lf = min(z.ls for z in successors) if successors else project_duration
         task.ls = task.lf - task.duration
 
         # Calculate the task's slack.
