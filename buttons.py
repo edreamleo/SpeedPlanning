@@ -51,11 +51,10 @@ def calculate_critical_path(tasks: list[Task]) -> tuple[int, list[Task]]:
             task.es = max(dep.ef for dep in task.deps)
         task.ef = task.es + task.duration
 
-    # Find total project duration
+    # Find total project duration.
     project_duration = max(task.ef for task in ordered_tasks)
 
-    # Backward Pass: Calculate LF and LS
-    # Visit tasks in reverse the topological order.
+    # Backward Pass: Calculate LF and LS.
     for task in reversed(ordered_tasks):
         # Find which tasks depend on the current task
         successors = [t for t in ordered_tasks if task in t.deps]
