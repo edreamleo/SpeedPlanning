@@ -19,7 +19,7 @@ User testing         :testing, after proto, 7d
 Marketing campaign   :marketing, after proto, 14d
 Release day          :milestone, after testing, 0d
 .. @+node:ekr.20260925121941.1: *3* Celebrate
-Celebration day     :milestone, after marketing, 7d
+Hurray!     :milestone, after marketing, 7d
 .. @+node:ekr.20260924042736.1: ** planning-root
 @language rest
 @wrap
