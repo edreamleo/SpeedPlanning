@@ -293,11 +293,16 @@ c.bodyWantsFocusNow()
 # @+<< gantt-chart: imports >>
 # @+node:ekr.20260925080838.1: *3* << gantt-chart: imports >>
 import textwrap
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QUrl
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 
 from leo.core import leoGlobals as g
+
+if TYPE_CHECKING:
+    from leo.core.leoNodes import Position
+
 
 # @-<< gantt-chart: imports >>
 g.cls()
@@ -326,7 +331,38 @@ gantt_template = textwrap.dedent("""
 
 
 # @-<< define gantt_template >>
+key = 'gantt-chart'
+
+
 # @+others
+# @+node:ekr.20260926121726.1: *3* class GanttTask
+class GanttTask:
+    def __init__(self, gnx: str, id_: str, name: str, p: Position) -> None:
+        self.gnx = gnx
+        self.id_ = id_
+        self.name = name
+        self.position = p
+
+        self.duration = 0
+        # deps: Tasks that this tasks depends on.
+        # They must all finish before this task can start.
+        self.deps = []
+        # successors:Tasks that depend on *this* task.
+        # This task must finish before any of these can start.
+        self.successors = []
+
+        # Metrics
+        self.es = -1  # Earliest Start
+        self.ef = -1  # Earliest Finish
+        self.ls = -1  # Latest Start
+        self.lf = -1  # Latest Finish
+        self.slack = -1
+
+    def __repr__(self):
+        id_, name = self.id_, self.name
+        return f"GanttTask: id: {id_:6} name: {name}"
+
+
 # @+node:ekr.20260925081852.1: *3* class GanttController
 class GanttController:
     # @+others
@@ -339,16 +375,48 @@ class GanttController:
             g.app.permanentScriptDict['demo'] = None
             return
 
+        trace = True
         ws = ' ' * 4
         result = [
             'gantt\n',
             f"{ws}title Product Launch Plan\n",
             f"{ws}dateFormat YYYY-MM-DD\n",
         ]
+
+        # Define dictionaries.
+        d_gnx_to_task: dict[str, GanttTask] = {}
+        d_id_to_task: dict[str, GanttTask] = {}  # Keys are task id_'s.
+        d_task_to_deps: dict[str, list[GanttTask]] = {}  # Keys are task id_'s.
+        d_task_to_succs: dict[str, list[GanttTask]] = {}  # Keys are task id_'s.
+
+        # Pass 1: Allocate tasks.
+        tasks = []
+        n_tasks = 0
+        for p in root.subtree():
+            n_tasks += 1
+            id_ = f"task{n_tasks}"
+            task = GanttTask(gnx=p.v.gnx, id_=id_, name=p.h.strip(), p=p.copy())
+            tasks.append(task)
+            d_gnx_to_task[p.v.gnx] = task
+            d_id_to_task[id_] = task
+
+        if trace:
+            for task in tasks:
+                print(task)
+
+        # Pass 2: Create Task.deps and Task.successors.
+
+        # Pass 3: Compute Task.metrics and critical path.
+
+        # Pass 4: Compute mermaid text.
+
+        def to_mermaid(p: Position) -> list[str]:
+            ### To do: parse human readable p.b to mermaid lines.
+            return [z.strip() for z in g.splitLines(p.b) if z.strip()]
+
         for p in root.subtree():
             result.append(f"{ws}section {p.h.strip()}\n")
-            lines = [z.strip() for z in g.splitLines(p.b) if z.strip()]
-            for s in lines:
+            for s in to_mermaid(p):
                 result.append(f"{ws}{ws}{s}\n")
 
         # g.printObj(result)
@@ -380,11 +448,10 @@ class GanttWebView(QWebEngineView):
 
 # @-others
 
-key = 'gantt-chart'
 view = g.app.permanentScriptDict.get(key)
 print(f"view? {bool(view)}")
 if not view:
-    g.app.permanentScriptDict['gantt-chart'] = view = GanttWebView()
+    g.app.permanentScriptDict[key] = view = GanttWebView()
 controller = GanttController()
 controller.view = view
 view.setHtml(controller.update_gantt_content('gantt-root'))
