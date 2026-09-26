@@ -48,7 +48,7 @@ def calculate_critical_path(tasks: list[Task]) -> tuple[int, list[Task]]:
     for task in tasks:
         visit(task)
 
-    if True:
+    if trace:
         print('Ordered tasks, with deps:')
         for z in ordered_tasks:
             print(f"{z.name} [{','.join(z2.name for z2 in z.deps)}]")
@@ -69,7 +69,7 @@ def calculate_critical_path(tasks: list[Task]) -> tuple[int, list[Task]]:
     for task in tasks:
         task.successors = [z for z in tasks if task in z.deps]
 
-    if True:
+    if trace:
         print('Reversed ordered tasks, with successors:')
         for z in reversed(ordered_tasks):
             print(f"{z.name} [{','.join(z2.name for z2 in z.successors)}]")
