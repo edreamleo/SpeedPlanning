@@ -375,6 +375,22 @@ class GanttController:
             g.app.permanentScriptDict['demo'] = None
             return
 
+        if 1:
+            return textwrap.dedent("""
+            gantt
+                title Product Launch Plan
+                dateFormat YYYY-MM-DD
+                section Planning
+                    Market research      :done, research, 2024-03-01, 10d
+                    Requirements         :done, reqs, after research, 7d
+                section Build
+                    Design prototype     :active, proto, after reqs, 14d
+                    User testing         :testing, after proto, 7d
+                section Launch
+                    Marketing campaign   :marketing, after proto, 14d
+                    Release day          :milestone, after testing, 0d
+    """)
+
         trace = True
         ws = ' ' * 4
         result = [
