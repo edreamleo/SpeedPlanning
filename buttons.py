@@ -442,14 +442,12 @@ class GanttController:
             pass  ###
 
         # @+node:ekr.20260927064646.1: *5* function: make_mermaid
-        def make_mermaid(title: str) -> list[str]:
+        def make_mermaid(format: str, title: str) -> list[str]:
 
             result = [
                 'gantt\n',
-                f"{ws}title {title}\n",
-                f"{ws}dateFormat YYYY-MM-DD\n",
+                f"{ws}title {title}\n\n",
             ]
-
             for top_p in root.children():
                 result.append(f"{ws}section {top_p.h.strip()}\n")
                 for s in to_mermaid(top_p):
@@ -526,7 +524,7 @@ class GanttController:
         # Compute mermaid text.
         root_lines = [z for z in g.splitLines(root.b) if z.strip()]
         title = root_lines[0] if root_lines else 'Unknown Project Title'
-        result = make_mermaid(title)
+        result = make_mermaid(format='dateFormat YYYY-MM-DD', title=title)
         g.printObj(result, tag='mermaid lines')
         return ''.join(result)
 
