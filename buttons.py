@@ -456,7 +456,7 @@ class GanttController:
                     if lines := to_mermaid(p):
                         # Prepend p.h to the first line.
                         result.append(f"{ws}{ws}{p.h.strip()} {lines[0]}\n")
-                        # All all other descendant lines.
+                        # Add all other descendant lines.
                         for s in lines[1:]:
                             result.append(f"{ws}{ws}{s}\n")
             return result
