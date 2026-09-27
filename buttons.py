@@ -292,6 +292,7 @@ c.bodyWantsFocusNow()
 """Create a mermaid Gantt chart from the 'planning-root' node."""
 # @+<< gantt-chart: imports >>
 # @+node:ekr.20260925080838.1: *3* << gantt-chart: imports >>
+
 import textwrap
 from typing import TYPE_CHECKING
 
@@ -409,11 +410,15 @@ class GanttController:
 
         # Pass 4: Compute mermaid text.
 
+        def label(p: Position) -> str:
+            """Create a mermaid label from p.h"""
+            return ''.join(z for z in p.h.replace(' ', '-').lower() if z.isalnum())
+
         def to_mermaid(p: Position) -> list[str]:
-            ### To do: parse human readable p.b to mermaid lines.
             lines = [z.strip() for z in g.splitLines(p.b)]
-            return [z for z in lines if z and not z.startswith('#')]
-            # return [z.strip() for z in g.splitLines(p.b) if z.strip()]
+            lines = [z for z in lines if z and not z.startswith('#')]
+            # Maybe? Add label?
+            return lines
 
         for top_p in root.children():
             result.append(f"{ws}section {top_p.h.strip()}\n")
