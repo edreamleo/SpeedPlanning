@@ -504,11 +504,12 @@ class GanttController:
             print()
             print('Ordered tasks, with deps...')
             for z in sorted_tasks:
-                print(f"{repr(z)} [{','.join(z2.name for z2 in z.deps)}]")
+                print(f"{z} [{','.join(z2.name for z2 in z.deps)}]")
+        if 0:
             print()
             print('Reversed ordered tasks, with successors...')
             for z in reversed(sorted_tasks):
-                print(f"{repr(z)} [{','.join(z2.name for z2 in z.successors)}]")
+                print(f"{z} [{','.join(z2.name for z2 in z.successors)}]")
             print()
 
         # Compute Task.metrics and critical path.
@@ -521,7 +522,7 @@ class GanttController:
 
         # Pass 4: Compute mermaid text.
         make_mermaid(result)
-        g.printObj(result)
+        g.printObj(result, tag='mermaid lines')
         return ''.join(result)
 
     # @+node:ekr.20260925081852.6: *4* GanttController.update_gantt_content
