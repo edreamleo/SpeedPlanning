@@ -377,11 +377,6 @@ class GanttController:
             return
 
         ws = ' ' * 4
-        result = [
-            'gantt\n',
-            f"{ws}title Product Launch Plan\n",
-            f"{ws}dateFormat YYYY-MM-DD\n",
-        ]
 
         # Define global data.
         d_gnx_to_task: dict[str, GanttTask] = {}
@@ -447,7 +442,14 @@ class GanttController:
             pass  ###
 
         # @+node:ekr.20260927064646.1: *5* function: make_mermaid
-        def make_mermaid(result: list[str]) -> None:
+        def make_mermaid(title: str) -> list[str]:
+
+            result = [
+                'gantt\n',
+                f"{ws}title {title}\n",
+                f"{ws}dateFormat YYYY-MM-DD\n",
+            ]
+
             for top_p in root.children():
                 result.append(f"{ws}section {top_p.h.strip()}\n")
                 for s in to_mermaid(top_p):
@@ -459,6 +461,7 @@ class GanttController:
                         # All all other descendant lines.
                         for s in lines[1:]:
                             result.append(f"{ws}{ws}{s}\n")
+            return result
 
         # @+node:ekr.20260927064818.1: *5* function: make_tasks
         def make_tasks(root) -> None:
@@ -520,8 +523,10 @@ class GanttController:
             print(f"Critical Path: {' -> '.join(critical_path)}")
             print()
 
-        # Pass 4: Compute mermaid text.
-        make_mermaid(result)
+        # Compute mermaid text.
+        root_lines = [z for z in g.splitLines(root.b) if z.strip()]
+        title = root_lines[0] if root_lines else 'Unknown Project Title'
+        result = make_mermaid(title)
         g.printObj(result, tag='mermaid lines')
         return ''.join(result)
 
