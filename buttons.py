@@ -415,15 +415,15 @@ class GanttController:
             return [z for z in lines if z and not z.startswith('#')]
             # return [z.strip() for z in g.splitLines(p.b) if z.strip()]
 
-        for p in root.children():
-            result.append(f"{ws}section {p.h.strip()}\n")
-            for s in to_mermaid(p):
+        for top_p in root.children():
+            result.append(f"{ws}section {top_p.h.strip()}\n")
+            for s in to_mermaid(top_p):
                 result.append(f"{ws}{ws}{s}\n")
-            for child in p.children():
-                if lines := to_mermaid(child):
-                    # Prepend child.h to the first line.
-                    result.append(f"{ws}{ws}{child.h.strip()} {lines[0]}\n")
-                    # All all other child lines.
+            for p in top_p.subtree():
+                if lines := to_mermaid(p):
+                    # Prepend p.h to the first line.
+                    result.append(f"{ws}{ws}{p.h.strip()} {lines[0]}\n")
+                    # All all other descendant lines.
                     for s in lines[1:]:
                         result.append(f"{ws}{ws}{s}\n")
 
