@@ -335,8 +335,16 @@ gantt_template = textwrap.dedent("""
 key = 'gantt-chart'
 headline = 'gantt-root'
 
-# Set of valid mermaid tasks.
-mermaid_tasks: set[str] = set()
+# Define global data.
+n_tasks = 0
+mermaid_tasks: set[str] = set()  # Set of valid mermaid tasks.
+title_to_task: dict[str, GanttTask] = {}
+mermaid_task_to_task: dict[str, GanttTask] = {}
+
+# d_gnx_to_task: dict[str, GanttTask] = {}
+# d_id_to_task: dict[str, GanttTask] = {}  # Keys are task id_'s.
+# d_task_to_deps: dict[str, list[GanttTask]] = {}  # Keys are task id_'s.
+# d_task_to_succs: dict[str, list[GanttTask]] = {}  # Keys are task id_'s.
 
 
 # @+others
@@ -351,20 +359,20 @@ mermaid_name_pat = re.compile(rf"^.*?\:\w+\,\s*(\w+)")
 
 
 class GanttTask:
-    def __init__(self, gnx: str, id_: str, title: str, p: Position) -> None:
+    def __init__(self, id_: str, title: str, p: Position) -> None:
 
-        self.gnx = gnx
         self.id_ = id_
         self.title = title
         self.p = p
+        title_to_task[title] = self
 
         # Find mermaid task name.
-        self.task = ''
+        self.mermaid_task = ''
         for s in clean_lines(p):
             m = mermaid_name_pat.match(s)
             if m and m.group(1) != 'after':
-                self.task = m.group(1)
-                mermaid_tasks.add(self.task)
+                self.mermaid_task = m.group(1)
+                mermaid_tasks.add(self.mermaid_task)
                 break
 
         # Dependencies...
@@ -385,7 +393,7 @@ class GanttTask:
         self.slack = -1
 
     def __repr__(self):
-        return f"GanttTask: id: {self.id_:6} title: {self.title:20} task: {self.task}"
+        return f"GanttTask: title: {self.title:20} mermaid_task: {self.mermaid_task}"
 
 
 # @+node:ekr.20260925081852.1: *3* class GanttController
@@ -401,15 +409,8 @@ class GanttController:
             return
 
         ws = ' ' * 4
-
-        # Define global data.
-        d_gnx_to_task: dict[str, GanttTask] = {}
-        d_id_to_task: dict[str, GanttTask] = {}  # Keys are task id_'s.
-        d_task_to_deps: dict[str, list[GanttTask]] = {}  # Keys are task id_'s.
-        d_task_to_succs: dict[str, list[GanttTask]] = {}  # Keys are task id_'s.
         tasks = []
         sorted_tasks = []
-        n_tasks = 0
 
         # @+others
         # @+node:ekr.20260925131750.1: *5* function: calculate_critical_path
@@ -464,14 +465,36 @@ class GanttController:
 
         # @+node:ekr.20260927065742.1: *5* function: make_deps *** to do
         def make_deps(root: Position, tasks: list[GanttTask]) -> None:
+            # global mermaid_tasks, title_to_task
+
+            # Step 1: Create all Task.devs lists.
             after_pat = re.compile(rf"^.*?\bafter\s*(\w+)")
-            after_pat = re.compile(rf"^.*?\:\w+\,\s*(\w+)")
-            # g.trace(root.h)
             for p in root.subtree():
                 for s in clean_lines(p):
                     if m := after_pat.match(s):
-                        # g.trace(f"{p.h:>20} after: {m.group(1):<10} {s.strip()}")
+                        mermaid_task = m.group(1)
+                        if mermaid_task in mermaid_tasks:
+                            title = p.h.strip()
+                            task = title_to_task.get(title)
+                            if task:
+                                assert isinstance(task, GanttTask), repr(task)
+                                # if mermaid_task in mermaid_task_to_task:
+                                #     g.trace(
+                                #         f"Duplicate task {task} for mermaid task {mermaid_task}"
+                                #     )
+                                # else:
+                                mermaid_task_to_task[mermaid_task] = task
+                                if mermaid_task not in task.deps:
+                                    task.deps.append(task)
+                                # g.trace(f"{p.h:>20} after: {m.group(1):<10} {s.strip()}")
+                            else:
+                                g.trace(f"Oops: not found {title=}")
                         break
+
+            # Step 2: # Step 1: Create all Task.successors lists
+            # for task in tasks:
+            #     for mermaid_task in task.deps:
+            #         pass  ### ???
 
         # @+node:ekr.20260927064646.1: *5* function: make_mermaid
         def make_mermaid(format: str, title: str) -> list[str]:
@@ -496,27 +519,26 @@ class GanttController:
         # @+node:ekr.20260927064818.1: *5* function: make_tasks
         def make_tasks(root) -> None:
 
-            nonlocal n_tasks
+            global n_tasks
             for p in root.subtree():
                 n_tasks += 1
-                id_ = f"task{n_tasks}"
-                task = GanttTask(gnx=p.v.gnx, id_=id_, title=p.h.strip(), p=p.copy())
+                task = GanttTask(id_=f"task{n_tasks}", title=p.h.strip(), p=p.copy())
                 tasks.append(task)
-                d_gnx_to_task[p.v.gnx] = task
-                d_id_to_task[id_] = task
 
         # @+node:ekr.20260927065200.1: *5* function: sort_tasks
-        def sort_tasks(tasks) -> list[GanttTasks]:
+        def sort_tasks(tasks: list[GanttTasks]) -> list[GanttTasks]:
             """Return an ordered list of tasks."""
+
             result = []
             visited = set()
 
             def visit(task):
                 if task not in visited:
+                    visited.add(task)
+                    if task not in result:
+                        result.append(task)
                     for dep in task.deps:
                         visit(dep)
-                    visited.add(task)
-                    result.append(task)
 
             for task in tasks:
                 visit(task)
@@ -538,19 +560,28 @@ class GanttController:
 
         # Create forward and backward dependencies.
         make_deps(root, tasks)
+        if 1:
+            print()
+            print('title_to_task...')
+            for title, task2 in sorted(title_to_task.items()):
+                print(f"{title:20} {task2}")
+            print()
+            print('mermaid_task_to_task...')
+            for mermaid_task, task2 in sorted(mermaid_task_to_task.items()):
+                print(f"{mermaid_task:20} {task2}")
 
         # Sort the tasks based on the dependencies.
         sorted_tasks = sort_tasks(tasks)
-        if 0:
+        if 1:
             print()
-            print('Ordered tasks, with deps...')
+            print('Sorted tasks, with deps...')
             for z in sorted_tasks:
-                print(f"{z} [{','.join(z2.name for z2 in z.deps)}]")
+                print(f"{z} [{','.join(z2.title for z2 in z.deps)}]")
         if 0:
             print()
             print('Reversed ordered tasks, with successors...')
             for z in reversed(sorted_tasks):
-                print(f"{z} [{','.join(z2.name for z2 in z.successors)}]")
+                print(f"{z} [{','.join(z2.title for z2 in z.successors)}]")
             print()
 
         # Compute Task.metrics and critical path.
@@ -565,8 +596,7 @@ class GanttController:
         root_lines = [z for z in g.splitLines(root.b) if z.strip()]
         title = root_lines[0] if root_lines else 'Unknown Project Title'
         result = make_mermaid(format='dateFormat YYYY-MM-DD', title=title)
-        if 0:
-            g.printObj(result, tag='mermaid lines')
+        # g.printObj(result, tag='mermaid lines')
         return ''.join(result)
 
     # @+node:ekr.20260925081852.6: *4* GanttController.update_gantt_content
