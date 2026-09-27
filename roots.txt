@@ -8,16 +8,24 @@
 .. @+all
 .. @+node:ekr.20260925084827.1: ** gantt-root
 .. @+node:ekr.20260925091127.1: *3* Planning
-Market research      :done, research, 2024-03-01, 10d
-Define requirements  :done, reqs, after research, 7d
+.. @+node:ekr.20260927021418.1: *4* Market research
+:done, research, 2024-03-01, 10d
+
+# Market research      :done, research, 2024-03-01, 10d
+.. @+node:ekr.20260927021430.1: *4* Requirements
+:done, reqs, after research, 7d
                
 .. @+node:ekr.20260925091130.1: *3* Build
-Design prototype     :active, proto, after reqs, 14d
-User testing         :testing, after proto, 7d
+.. @+node:ekr.20260927023219.1: *4* Design prototype
+:active, proto, after reqs, 14d
                 
+.. @+node:ekr.20260927023207.1: *4* User testing
+:testing, after proto, 7d
 .. @+node:ekr.20260925091130.2: *3* Launch
-Marketing campaign   :marketing, after proto, 14d
-Release day          :milestone, after testing, 0d
+.. @+node:ekr.20260927023520.1: *4* Marketing campaign
+:marketing, after proto, 14d
+.. @+node:ekr.20260927023522.1: *4* Release day
+:milestone, after testing, 0d
 .. @+node:ekr.20260925121941.1: *3* Celebrate
 Hurray!     :milestone, after marketing, 7d
 .. @+node:ekr.20260924042736.1: ** planning-root

@@ -375,26 +375,6 @@ class GanttController:
             g.app.permanentScriptDict['demo'] = None
             return
 
-        if 0:
-            # @+<< return static text >>
-            # @+node:ekr.20260926144301.1: *5* << return static text >>
-            return textwrap.dedent("""
-            gantt
-                title Product Launch Plan
-                dateFormat YYYY-MM-DD
-                section Planning
-                    Market research      :done, research, 2024-03-01, 10d
-                    Define Requirements  :done, reqs, after research, 7d
-                section Build
-                    Design prototype     :active, proto, after reqs, 14d
-                    User testing         :testing, after proto, 7d
-                section Launch
-                    Marketing campaign   :marketing, after proto, 14d
-                    Release day          :milestone, after testing, 0d
-            """)
-            # @-<< return static text >>
-
-        trace = True
         ws = ' ' * 4
         result = [
             'gantt\n',
@@ -419,7 +399,7 @@ class GanttController:
             d_gnx_to_task[p.v.gnx] = task
             d_id_to_task[id_] = task
 
-        if trace:
+        if 0:
             for task in tasks:
                 print(task)
 
@@ -431,14 +411,23 @@ class GanttController:
 
         def to_mermaid(p: Position) -> list[str]:
             ### To do: parse human readable p.b to mermaid lines.
-            return [z.strip() for z in g.splitLines(p.b) if z.strip()]
+            lines = [z.strip() for z in g.splitLines(p.b)]
+            return [z for z in lines if z and not z.startswith('#')]
+            # return [z.strip() for z in g.splitLines(p.b) if z.strip()]
 
-        for p in root.subtree():
+        for p in root.children():
             result.append(f"{ws}section {p.h.strip()}\n")
             for s in to_mermaid(p):
                 result.append(f"{ws}{ws}{s}\n")
+            for child in p.children():
+                if lines := to_mermaid(child):
+                    # Prepend child.h to the first line.
+                    result.append(f"{ws}{ws}{child.h.strip()} {lines[0]}\n")
+                    # All all other child lines.
+                    for s in lines[1:]:
+                        result.append(f"{ws}{ws}{s}\n")
 
-        # g.printObj(result)
+        g.printObj(result)
         return ''.join(result)
 
     # @+node:ekr.20260925081852.6: *4* GanttController.update_gantt_content
