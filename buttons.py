@@ -335,17 +335,40 @@ gantt_template = textwrap.dedent("""
 key = 'gantt-chart'
 headline = 'gantt-root'
 
+# Set of valid mermaid tasks.
+mermaid_tasks: set[str] = set()
+
 
 # @+others
+# @+node:ekr.20260927100045.1: *3* function: clean_lines
+def clean_lines(p: Position) -> list[str]:
+    lines = [z.strip() for z in g.splitLines(p.b) if z.strip()]
+    return [z for z in lines if not z.startswith('#')]
+
+
 # @+node:ekr.20260926121726.1: *3* class GanttTask
+mermaid_name_pat = re.compile(rf"^.*?\:\w+\,\s*(\w+)")
+
+
 class GanttTask:
-    def __init__(self, gnx: str, id_: str, name: str, p: Position) -> None:
+    def __init__(self, gnx: str, id_: str, title: str, p: Position) -> None:
+
         self.gnx = gnx
         self.id_ = id_
-        self.name = name
-        self.position = p
+        self.title = title
+        self.p = p
 
-        self.duration = 0
+        # Find mermaid task name.
+        self.task = ''
+        for s in clean_lines(p):
+            m = mermaid_name_pat.match(s)
+            if m and m.group(1) != 'after':
+                self.task = m.group(1)
+                mermaid_tasks.add(self.task)
+                break
+
+        # Dependencies...
+
         # deps: Tasks that this tasks depends on.
         # They must all finish before this task can start.
         self.deps = []
@@ -354,6 +377,7 @@ class GanttTask:
         self.successors = []
 
         # Metrics
+        self.duration = 0
         self.es = -1  # Earliest Start
         self.ef = -1  # Earliest Finish
         self.ls = -1  # Latest Start
@@ -361,8 +385,7 @@ class GanttTask:
         self.slack = -1
 
     def __repr__(self):
-        id_, name = self.id_, self.name
-        return f"GanttTask: id: {id_:6} name: {name}"
+        return f"GanttTask: id: {self.id_:6} title: {self.title:20} task: {self.task}"
 
 
 # @+node:ekr.20260925081852.1: *3* class GanttController
@@ -398,7 +421,7 @@ class GanttController:
             # Forward Pass: Calculate ES and EF.
             for task in sorted_tasks:
                 deps = task.deps
-                bad = [z.name for z in deps if z.ef == -1]
+                bad = [z.title for z in deps if z.ef == -1]
                 assert not bad, bad
                 task.es = max(dep.ef for dep in deps) if deps else 0
                 task.ef = task.es + task.duration
@@ -413,7 +436,7 @@ class GanttController:
             # Backward Pass: Calculate LF and LS.
             for task in reversed(sorted_tasks):
                 successors = task.successors
-                bad = [z.name for z in successors if z.lf == -1]
+                bad = [z.title for z in successors if z.lf == -1]
                 assert not bad, bad
                 task.lf = min(z.ls for z in successors) if successors else project_duration
                 task.ls = task.lf - task.duration
@@ -422,14 +445,9 @@ class GanttController:
                 task.slack = task.lf - task.ef
 
             # The critical path are those tasks with zero slack.
-            critical_path = [task.name for task in sorted_tasks if task.slack == 0]
+            critical_path = [task.title for task in sorted_tasks if task.slack == 0]
 
             return project_duration, critical_path
-
-        # @+node:ekr.20260927100045.1: *5* function: clean_lines
-        def clean_lines(p: Position) -> list[str]:
-            lines = [z.strip() for z in g.splitLines(p.b) if z.strip()]
-            return [z for z in lines if not z.startswith('#')]
 
         # @+node:ekr.20260927064540.1: *5* function: label
         def label(p: Position) -> str:
@@ -444,14 +462,16 @@ class GanttController:
             # Maybe? Add label?
             return lines
 
-        # @+node:ekr.20260927065742.1: *5* function: make_deps
+        # @+node:ekr.20260927065742.1: *5* function: make_deps *** to do
         def make_deps(root: Position, tasks: list[GanttTask]) -> None:
             after_pat = re.compile(rf"^.*?\bafter\s*(\w+)")
-            g.trace(root.h)
+            after_pat = re.compile(rf"^.*?\:\w+\,\s*(\w+)")
+            # g.trace(root.h)
             for p in root.subtree():
                 for s in clean_lines(p):
                     if m := after_pat.match(s):
-                        print(f"{p.h:>20} after: {s.strip()}")
+                        # g.trace(f"{p.h:>20} after: {m.group(1):<10} {s.strip()}")
+                        break
 
         # @+node:ekr.20260927064646.1: *5* function: make_mermaid
         def make_mermaid(format: str, title: str) -> list[str]:
@@ -480,7 +500,7 @@ class GanttController:
             for p in root.subtree():
                 n_tasks += 1
                 id_ = f"task{n_tasks}"
-                task = GanttTask(gnx=p.v.gnx, id_=id_, name=p.h.strip(), p=p.copy())
+                task = GanttTask(gnx=p.v.gnx, id_=id_, title=p.h.strip(), p=p.copy())
                 tasks.append(task)
                 d_gnx_to_task[p.v.gnx] = task
                 d_id_to_task[id_] = task
@@ -507,11 +527,14 @@ class GanttController:
 
         # Create tasks.
         make_tasks(root)
-        if 1:
+        if 0:
             print()
             print('Tasks...')
             for z in tasks:
                 print(z)
+        if 1:
+            print()
+            g.printObj(list(mermaid_tasks), tag='Mermaid tasks')
 
         # Create forward and backward dependencies.
         make_deps(root, tasks)
@@ -535,8 +558,8 @@ class GanttController:
         if 1:
             print()
             print(f"Project Duration: {project_duration} days")
-            print(f"Critical Path: {' -> '.join(critical_path)}")
             print()
+            g.printObj(critical_path, tag='Critical path')
 
         # Compute mermaid text.
         root_lines = [z for z in g.splitLines(root.b) if z.strip()]
