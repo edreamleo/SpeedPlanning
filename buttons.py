@@ -494,27 +494,22 @@ class GanttController:
 
         # Create tasks.
         make_tasks(root)
-        if 0:
-            for task in tasks:
-                print(task)
 
         # Create forward and backward dependencies.
         make_deps(root, tasks)
-        if 1:
-            print('Ordered tasks, with deps:')
-            for z in sorted_tasks:
-                print(f"{z.name} [{','.join(z2.name for z2 in z.deps)}]")
-            print()
-            print('Reversed ordered tasks, with successors:')
-            for z in reversed(sorted_tasks):
-                print(f"{z.name} [{','.join(z2.name for z2 in z.successors)}]")
-            print()
 
         # Sort the tasks based on the dependencies.
         sorted_tasks = sort_tasks(tasks)
         if 1:
-            for task in sorted_tasks:
-                print(task)
+            print()
+            print('Ordered tasks, with deps...')
+            for z in sorted_tasks:
+                print(f"{repr(z)} [{','.join(z2.name for z2 in z.deps)}]")
+            print()
+            print('Reversed ordered tasks, with successors...')
+            for z in reversed(sorted_tasks):
+                print(f"{repr(z)} [{','.join(z2.name for z2 in z.successors)}]")
+            print()
 
         # Compute Task.metrics and critical path.
         project_duration, critical_path = calculate_critical_path(tasks, sorted_tasks)
