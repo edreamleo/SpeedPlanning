@@ -292,7 +292,7 @@ c.bodyWantsFocusNow()
 """Create a mermaid Gantt chart from the 'planning-root' node."""
 # @+<< gantt-chart: imports >>
 # @+node:ekr.20260925080838.1: *3* << gantt-chart: imports >>
-
+import re
 import textwrap
 from typing import TYPE_CHECKING
 
@@ -333,6 +333,7 @@ gantt_template = textwrap.dedent("""
 
 # @-<< define gantt_template >>
 key = 'gantt-chart'
+headline = 'gantt-root'
 
 
 # @+others
@@ -425,6 +426,11 @@ class GanttController:
 
             return project_duration, critical_path
 
+        # @+node:ekr.20260927100045.1: *5* function: clean_lines
+        def clean_lines(p: Position) -> list[str]:
+            lines = [z.strip() for z in g.splitLines(p.b) if z.strip()]
+            return [z for z in lines if not z.startswith('#')]
+
         # @+node:ekr.20260927064540.1: *5* function: label
         def label(p: Position) -> str:
             """Create a mermaid label from p.h"""
@@ -432,14 +438,20 @@ class GanttController:
 
         # @+node:ekr.20260927064542.1: *5* function: to_mermaid
         def to_mermaid(p: Position) -> list[str]:
-            lines = [z.strip() for z in g.splitLines(p.b)]
-            lines = [z for z in lines if z and not z.startswith('#')]
+            lines = clean_lines(p)
+            # lines = [z.strip() for z in g.splitLines(p.b)]
+            lines = [z for z in lines if not z.startswith('#')]
             # Maybe? Add label?
             return lines
 
         # @+node:ekr.20260927065742.1: *5* function: make_deps
         def make_deps(root: Position, tasks: list[GanttTask]) -> None:
-            pass  ###
+            after_pat = re.compile(rf"^.*?\bafter\s*(\w+)")
+            g.trace(root.h)
+            for p in root.subtree():
+                for s in clean_lines(p):
+                    if m := after_pat.match(s):
+                        print(f"{p.h:>20} after: {s.strip()}")
 
         # @+node:ekr.20260927064646.1: *5* function: make_mermaid
         def make_mermaid(format: str, title: str) -> list[str]:
@@ -495,13 +507,18 @@ class GanttController:
 
         # Create tasks.
         make_tasks(root)
+        if 1:
+            print()
+            print('Tasks...')
+            for z in tasks:
+                print(z)
 
         # Create forward and backward dependencies.
         make_deps(root, tasks)
 
         # Sort the tasks based on the dependencies.
         sorted_tasks = sort_tasks(tasks)
-        if 1:
+        if 0:
             print()
             print('Ordered tasks, with deps...')
             for z in sorted_tasks:
@@ -525,7 +542,8 @@ class GanttController:
         root_lines = [z for z in g.splitLines(root.b) if z.strip()]
         title = root_lines[0] if root_lines else 'Unknown Project Title'
         result = make_mermaid(format='dateFormat YYYY-MM-DD', title=title)
-        g.printObj(result, tag='mermaid lines')
+        if 0:
+            g.printObj(result, tag='mermaid lines')
         return ''.join(result)
 
     # @+node:ekr.20260925081852.6: *4* GanttController.update_gantt_content
@@ -554,15 +572,18 @@ class GanttWebView(QWebEngineView):
 
 # @-others
 
-view = g.app.permanentScriptDict.get(key)
-print(f"view? {bool(view)}")
-if not view:
-    g.app.permanentScriptDict[key] = view = GanttWebView()
 controller = GanttController()
-controller.view = view
-view.setHtml(controller.update_gantt_content('gantt-root'))
-view.show()
-c.bodyWantsFocusNow()
+if 1:
+    controller.get_gantt_content(headline)
+else:
+    view = g.app.permanentScriptDict.get(key)
+    print(f"view? {bool(view)}")
+    if not view:
+        g.app.permanentScriptDict[key] = view = GanttWebView()
+    controller.view = view
+    view.setHtml(controller.update_gantt_content(headline))
+    view.show()
+    c.bodyWantsFocusNow()
 # @@language python
 
 # @-others
