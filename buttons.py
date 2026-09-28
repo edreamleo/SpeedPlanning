@@ -526,11 +526,7 @@ class GanttController:
 
         # @+node:ekr.20260927064542.1: *5* function: to_mermaid
         def to_mermaid(p: Position) -> list[str]:
-            lines = clean_lines(p)
-            # lines = [z.strip() for z in g.splitLines(p.b)]
-            lines = [z for z in lines if not z.startswith('#')]
-            # Maybe? Add label?
-            return lines
+            return [z for z in clean_lines(p) if not z.startswith('#')]
 
         # @+node:ekr.20260927065742.1: *5* function: make_deps
         def make_deps(root: Position, tasks: list[GanttTask]) -> None:
