@@ -374,7 +374,8 @@ class GanttTask:
         self.mermaid_task_names: list[str] = []  # Set below.
         self.mermaid_tasks: list[GanttTask] = []  # Set later.
         self.p = p.copy()
-        self.title = p.h.strip().replace(':', '')  # Titles must not contain colons.
+        # Clean titles so they don't confuse the regex parsers.
+        self.title = p.h.strip().replace(':', ' ').replace(',', ' ')
 
         # @+others
         # @+node:ekr.20260928120002.1: *5* function: add_after_name
