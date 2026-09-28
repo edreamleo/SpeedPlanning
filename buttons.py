@@ -461,6 +461,12 @@ class GanttTask:
             succ_s = ''
         return f"GanttTask: {self.title:>18} time: {self.duration:2} {m_tasks_s}{m_after_tasks_s}{deps_s}{succ_s}"
 
+    # @+node:ekr.20260928131306.1: *4* GanttTask._short_repr
+    def short_repr(self) -> None:
+        names = self.mermaid_task_names
+        tasks_s = f"[{','.join(names)}]" if names else ''
+        return f"GanttTask: {self.title:>18} time: {self.duration:2} {tasks_s}"
+
     # @+node:ekr.20260928103311.1: *4* GanttTask._show_list
     def _show_list(self, tasks: list[GanttTask], tag: str) -> str:
         if not tasks:
@@ -522,7 +528,7 @@ class GanttController:
                 task.slack = task.lf - task.ef
 
             # The critical path are those tasks with zero slack.
-            critical_path = [task.title for task in sorted_tasks if task.slack == 0]
+            critical_path = [task for task in sorted_tasks if task.slack == 0]
 
             return project_duration, critical_path
 
@@ -562,7 +568,7 @@ class GanttController:
             result = [
                 'gantt\n',
                 f"{ws}title {title.strip()}\n",
-                f"{ws}dateFormat YYYY-MM-DD\n",
+                f"{ws}{format}\n",
             ]
             for top_p in root.children():
                 result.append(f"{ws}section {top_p.h.strip()}\n")
@@ -582,6 +588,16 @@ class GanttController:
                 # n_tasks += 1
                 # task = GanttTask(id_=f"task{n_tasks}", title=p.h.strip(), p=p.copy())
                 tasks.append(GanttTask(p))
+
+        # @+node:ekr.20260928132246.1: *5* function: patch_mermaid
+        def patch_mermaid(tasks: list[GanttTask], result: list[str]) -> None:
+
+            names = []
+            for task in tasks:
+                names.extend(task.mermaid_task_names)
+            for i, s in enumerate(result):
+                if any(z in s for z in names) and ':' in s:
+                    result[i] = s.replace(':', ': crit, ')
 
         # @+node:ekr.20260927065200.1: *5* function: sort_tasks
         def sort_tasks(tasks: list[GanttTasks]) -> list[GanttTasks]:
@@ -639,13 +655,16 @@ class GanttController:
             print()
             print(f"Project Duration: {project_duration} days")
             print()
-            g.printObj(critical_path, tag='Critical path')
+            print('Critical path')
+            for task in critical_path:
+                print(f"  {task.short_repr()}")
 
         # Compute mermaid text.
         root_lines = [z for z in g.splitLines(root.b) if z.strip()]
         title = root_lines[0] if root_lines else 'Unknown Project Title'
         result = make_mermaid(format='dateFormat YYYY-MM-DD', title=title)
-        if 0:
+        patch_mermaid(critical_path, result)
+        if 1:
             g.printObj(result, tag='mermaid lines')
         return ''.join(result)
 
