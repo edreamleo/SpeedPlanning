@@ -444,9 +444,11 @@ class GanttTask:
             m_tasks_s = f" {m_task_names:14}"
         else:
             m_tasks_s = ' ' * 15
-        m_after_names = self.after_mermaid_task_names
-        m_after_tasks_s = f" after: {m_after_names}" if m_after_names else ''
-
+        if self.after_mermaid_task_names:
+            m_after_names = f"[{','.join(self.after_mermaid_task_names)}]"
+            m_after_tasks_s = f" after: {m_after_names:14}"  ### if m_after_names else ''
+        else:
+            m_after_tasks_s = ' ' * 22
         deps_s = self._show_list(self.deps, tag='deps')
         succ_s = self._show_list(self.successors, tag='successors')
         return f"GanttTask: {self.title:>20}{m_tasks_s}{m_after_tasks_s}{deps_s}{succ_s}"
