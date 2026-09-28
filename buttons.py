@@ -621,7 +621,7 @@ class GanttController:
 
         # Sort the tasks based on the dependencies.
         sorted_tasks = sort_tasks(tasks)
-        if 1:
+        if 0:
             print()
             print('Sorted tasks...')
             for z in sorted_tasks:
