@@ -375,6 +375,11 @@ class GanttTask:
         self.title = p.h.strip()
 
         # @+others
+        # @+node:ekr.20260928120002.1: *5* function: add_after_name
+        def add_after_name(name: str) -> None:
+            if name not in self.after_mermaid_tasks:
+                self.after_mermaid_task_names.append(name)
+
         # @+node:ekr.20260928103820.1: *5* function: add_m_name
         def add_m_name(sename1: str, name2: str) -> None:
             name = name2 if name1 in ('active', 'done', 'milestone') else name1
@@ -393,10 +398,6 @@ class GanttTask:
                 mermaid_task_names_to_tasks[name] = aList
 
         # @-others
-
-        def add_after_name(name: str) -> None:
-            if name not in self.after_mermaid_tasks:
-                self.after_mermaid_task_names.append(name)
 
         # Find mermaid task names and update data structures.
         for s in self.lines:
@@ -533,7 +534,7 @@ class GanttController:
             # Maybe? Add label?
             return lines
 
-        # @+node:ekr.20260927065742.1: *5* function: make_deps *** to do
+        # @+node:ekr.20260927065742.1: *5* function: make_deps
         def make_deps(root: Position, tasks: list[GanttTask]) -> None:
             """Create task.deps and task.successors for all tasks."""
 
