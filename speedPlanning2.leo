@@ -24,6 +24,21 @@
 <v t="ekr.20260925173401.1"><vh>@file buttons.py</vh></v>
 <v t="ekr.20260924115347.1"><vh>@file roots.txt</vh></v>
 </v>
+<v t="ekr.20260925084827.1"><vh>gantt-root</vh>
+<v t="ekr.20260925091127.1"><vh>Planning</vh>
+<v t="ekr.20260927021418.1"><vh>Market research</vh></v>
+<v t="ekr.20260927021430.1"><vh>Requirements</vh></v>
+</v>
+<v t="ekr.20260925091130.1"><vh>Build</vh>
+<v t="ekr.20260927023219.1"><vh>Design prototype</vh></v>
+<v t="ekr.20260927023207.1"><vh>User testing</vh></v>
+</v>
+<v t="ekr.20260925091130.2"><vh>Launch</vh>
+<v t="ekr.20260927023520.1"><vh>Marketing campaign</vh></v>
+<v t="ekr.20260927023522.1"><vh>Release day</vh></v>
+</v>
+<v t="ekr.20260925121941.1"><vh>Celebrate</vh></v>
+</v>
 </vnodes>
 <tnodes>
 <t tx="ekr.20260923042416.1"></t>
@@ -36,8 +51,8 @@ c.backup_helper(sub_dir='SpeedPlanning')
 
 @language python
 </t>
-<t tx="ekr.20260923042704.1">critical-path
-gantt-chart
+<t tx="ekr.20260923042704.1">gantt-chart
+critical-path
 flow-chart</t>
 <t tx="ekr.20260923042755.1"></t>
 <t tx="ekr.20260924050522.1">g.app.permanentScriptDict['flow-chart'] = None</t>
@@ -51,5 +66,26 @@ flow-chart</t>
 </t>
 <t tx="ekr.20260925080653.1"></t>
 <t tx="ekr.20260925084334.1">g.app.permanentScriptDict['gantt-chart'] = None</t>
+<t tx="ekr.20260925084827.1">Product Launch Plan
+</t>
+<t tx="ekr.20260925091127.1"></t>
+<t tx="ekr.20260925091130.1"></t>
+<t tx="ekr.20260925091130.2"></t>
+<t tx="ekr.20260925121941.1">:milestone, after marketing, 7d
+</t>
+<t tx="ekr.20260927021418.1">:done, research, 2024-03-01, 10d
+</t>
+<t tx="ekr.20260927021430.1">:done, reqs, after research, 7d
+               
+</t>
+<t tx="ekr.20260927023207.1">:testing, after proto, 7d
+</t>
+<t tx="ekr.20260927023219.1">:active, proto, after reqs, 14d
+                
+</t>
+<t tx="ekr.20260927023520.1">:marketing, after proto, 14d
+</t>
+<t tx="ekr.20260927023522.1">:milestone, after testing, 0d
+</t>
 </tnodes>
 </leo_file>
