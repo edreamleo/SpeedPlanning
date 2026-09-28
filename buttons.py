@@ -374,7 +374,7 @@ class GanttTask:
         self.mermaid_task_names: list[str] = []  # Set below.
         self.mermaid_tasks: list[GanttTask] = []  # Set later.
         self.p = p.copy()
-        self.title = p.h.strip()
+        self.title = p.h.strip().replace(':', '')  # Titles must not contain colons.
 
         # @+others
         # @+node:ekr.20260928120002.1: *5* function: add_after_name
@@ -597,7 +597,7 @@ class GanttController:
                 names.extend(task.mermaid_task_names)
             for i, s in enumerate(result):
                 if any(z in s for z in names) and ':' in s:
-                    result[i] = s.replace(':', ': crit, ')
+                    result[i] = s.replace(':', ':crit, ')
 
         # @+node:ekr.20260927065200.1: *5* function: sort_tasks
         def sort_tasks(tasks: list[GanttTasks]) -> list[GanttTasks]:
