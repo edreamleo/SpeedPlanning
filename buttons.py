@@ -460,7 +460,10 @@ class GanttTask:
         # g.trace(f"{tag} {[z.title for z in tasks]}")
         result = [f" {tag}: "]
         for task in tasks:
-            result.append(f" {task.title}, ")
+            if task.mermaid_task_names:
+                result.append(f" [{','.join(task.mermaid_task_names)}], ")
+            else:
+                result.append(f" {task.title}, ")
         return ''.join(result)
 
     # @-others
