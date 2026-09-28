@@ -558,19 +558,17 @@ class GanttController:
 
             result = [
                 'gantt\n',
-                f"{ws}title {title}\n\n",
+                f"{ws}title {title.strip()}\n",
+                f"{ws}dateFormat YYYY-MM-DD\n",
             ]
             for top_p in root.children():
                 result.append(f"{ws}section {top_p.h.strip()}\n")
                 for s in to_mermaid(top_p):
-                    result.append(f"{ws}{ws}{s}\n")
+                    result.append(f"{ws}{ws}{top_p.h.strip()} {s}\n")
                 for p in top_p.subtree():
                     if lines := to_mermaid(p):
-                        # Prepend p.h to the first line.
-                        result.append(f"{ws}{ws}{p.h.strip()} {lines[0]}\n")
-                        # Add all other descendant lines.
-                        for s in lines[1:]:
-                            result.append(f"{ws}{ws}{s}\n")
+                        for s in lines:
+                            result.append(f"{ws}{ws}{p.h.strip()} {s}\n")
             return result
 
         # @+node:ekr.20260927064818.1: *5* function: make_tasks
@@ -632,11 +630,9 @@ class GanttController:
                 print(z)
             print()
 
-        return  ###
-
         # Compute Task.metrics and critical path.
         project_duration, critical_path = calculate_critical_path(tasks, sorted_tasks)
-        if 0:
+        if 1:
             print()
             print(f"Project Duration: {project_duration} days")
             print()
@@ -646,7 +642,8 @@ class GanttController:
         root_lines = [z for z in g.splitLines(root.b) if z.strip()]
         title = root_lines[0] if root_lines else 'Unknown Project Title'
         result = make_mermaid(format='dateFormat YYYY-MM-DD', title=title)
-        # g.printObj(result, tag='mermaid lines')
+        if 1:
+            g.printObj(result, tag='mermaid lines')
         return ''.join(result)
 
     # @+node:ekr.20260925081852.6: *4* GanttController.update_gantt_content
@@ -676,7 +673,7 @@ class GanttWebView(QWebEngineView):
 # @-others
 
 controller = GanttController()
-if 1:
+if 0:
     controller.get_gantt_content(headline)
 else:
     view = g.app.permanentScriptDict.get(key)
