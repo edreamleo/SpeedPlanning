@@ -363,6 +363,8 @@ no_after_pat = re.compile(rf"^\:(\w+)\,\s*(\w+)")
 
 
 class GanttTask:
+    # @+others
+    # @+node:ekr.20260928104030.1: *4* GanttTaks.__init__ & helpers
     def __init__(self, p: Position) -> None:
 
         self.after_mermaid_task_names: list[str] = []  # Set below.
@@ -377,11 +379,9 @@ class GanttTask:
         assert self.title not in title_to_task
         title_to_task[self.title] = self
 
-        def add_after_name(name: str) -> None:
-            if name not in self.after_mermaid_tasks:
-                self.after_mermaid_task_names.append(name)
-
-        def add_m_name(name1: str, name2: str) -> None:
+        # @+others
+        # @+node:ekr.20260928103820.1: *5* function: add_m_name
+        def add_m_name(sename1: str, name2: str) -> None:
             name = name2 if name1 in ('active', 'done', 'milestone') else name1
             if not name:
                 return  # Not an error. The line does not define mermaid task name.
@@ -396,6 +396,12 @@ class GanttTask:
             if self not in aList:
                 aList.append(self)
                 mermaid_task_names_to_tasks[name] = aList
+
+        # @-others
+
+        def add_after_name(name: str) -> None:
+            if name not in self.after_mermaid_tasks:
+                self.after_mermaid_task_names.append(name)
 
         # Find mermaid task names and update data structures.
         for s in self.lines:
@@ -431,6 +437,21 @@ class GanttTask:
         if 0 and self.lines:
             g.trace(f"{self.title:20} {self.lines}")
 
+    # @+node:ekr.20260928103315.1: *4* GanttTask.__repr__
+    def __repr__(self):
+        if self.mermaid_task_names:
+            m_task_names = f"[{','.join(self.mermaid_task_names)}]"
+            m_tasks_s = f" {m_task_names:14}"
+        else:
+            m_tasks_s = ' ' * 15
+        m_after_names = self.after_mermaid_task_names
+        m_after_tasks_s = f" after: {m_after_names}" if m_after_names else ''
+
+        deps_s = self._show_list(self.deps, tag='deps')
+        succ_s = self._show_list(self.successors, tag='successors')
+        return f"GanttTask: {self.title:>20}{m_tasks_s}{m_after_tasks_s}{deps_s}{succ_s}"
+
+    # @+node:ekr.20260928103311.1: *4* GanttTask._show_list
     def _show_list(self, tasks: list[GanttTask], tag: str) -> str:
         if not tasks:
             return ''
@@ -440,14 +461,7 @@ class GanttTask:
             result.append(f" {task.title}, ")
         return ''.join(result)
 
-    def __repr__(self):
-        m_task_names = f"[{','.join(self.mermaid_task_names)}]" if self.mermaid_task_names else ''
-        m_tasks_s = f" {m_task_names:12}" if m_task_names else ''
-        m_after_names = self.after_mermaid_task_names
-        m_after_tasks_s = f" after: {m_after_names}" if m_after_names else ''
-        deps_s = self._show_list(self.deps, tag='deps')
-        succ_s = self._show_list(self.successors, tag='successors')
-        return f"GanttTask: {self.title:>20}{m_tasks_s}{m_after_tasks_s}{deps_s}{succ_s}"
+    # @-others
 
 
 # @+node:ekr.20260925081852.1: *3* class GanttController
