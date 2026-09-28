@@ -380,6 +380,11 @@ class GanttTask:
                 # Update global mermaid_tasks list.
                 if after_task not in mermaid_tasks:
                     mermaid_tasks.append(after_task)
+                # Update global mermaid_task_to_tasks dict.
+                aList = mermaid_task_to_tasks.get(after_task, [])
+                if self not in aList:
+                    aList.append(self)
+                    mermaid_task_to_tasks[after_task] = aList
                 continue  # Prevent any other match.
             if m := mermaid_name_pat.match(s):
                 mermaid_task = m.group(1)
@@ -412,12 +417,24 @@ class GanttTask:
         self.lf = -1  # Latest Finish
         self.slack = -1
 
+    def _show_list(self, tasks: list[GanttTask], tag: str) -> str:
+        if not tasks:
+            return ''
+        result = [f" {tag}: "]
+        for task in tasks:
+            result.append(f" {task.title}")
+            # if task.mermaid_tasks:
+            #     result.append(','.join(task.mermaid_tasks))
+            # else:
+            #     result.append(f" Oops! {task.title}")
+        return ''.join(result)
+
     def __repr__(self):
         m_tasks_s = f"{' ' * 8}{self.mermaid_tasks}" if self.mermaid_tasks else ''
-        m_after_tasks = f" after: {self.after_mermaid_tasks}" if self.after_mermaid_tasks else ''
-        deps_s = f" deps: {self.deps}" if self.deps else ''
-        succ_s = f" successors: {self.successors}" if self.successors else ''
-        return f"GanttTask: {self.title:>20}{m_tasks_s}{m_after_tasks}{deps_s}{succ_s}"
+        m_after_tasks_s = f" after: {self.after_mermaid_tasks}" if self.after_mermaid_tasks else ''
+        deps_s = self._show_list(self.deps, tag='deps')
+        succ_s = self._show_list(self.successors, tag='successors')
+        return f"GanttTask: {self.title:>20}{m_tasks_s}{m_after_tasks_s}{deps_s}{succ_s}"
 
 
 # @+node:ekr.20260925081852.1: *3* class GanttController
@@ -489,7 +506,16 @@ class GanttController:
         def make_deps(root: Position, tasks: list[GanttTask]) -> None:
             """Create task.deps and task.successors for all tasks."""
 
-            # Step 1: Create all Task.devs lists.
+            # Step 1: Create all Task.deps lists.
+            for task in tasks:
+                for m_task in task.after_mermaid_tasks:
+                    assert m_task in mermaid_tasks, mermaid_tasks
+                    aList = mermaid_task_to_tasks.get(m_task)
+                    for dep_task in aList:
+                        assert dep_task in tasks, repr(dep_task)
+                        if dep_task not in task.deps:
+                            task.deps.append(dep_task)
+
             # after_pat = re.compile(rf"^.*?\bafter\s*(\w+)")
             # for p in root.subtree():
             #     for s in clean_lines(p):
@@ -605,8 +631,10 @@ class GanttController:
                 print(z)
             print()
 
+        return  ###
+
         # Compute Task.metrics and critical path.
-        # project_duration, critical_path = calculate_critical_path(tasks, sorted_tasks)
+        project_duration, critical_path = calculate_critical_path(tasks, sorted_tasks)
         if 0:
             print()
             print(f"Project Duration: {project_duration} days")
