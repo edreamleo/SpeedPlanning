@@ -462,8 +462,6 @@ class GanttTask:
         for task in tasks:
             if task.mermaid_task_names:
                 result.append(', '.join(task.mermaid_task_names))
-            # else:
-            #     result.append(task.title)
         return f"{tag}: [{', '.join(result)}]" if result else ''
 
     # @-others
