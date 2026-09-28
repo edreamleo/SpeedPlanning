@@ -566,9 +566,9 @@ class GanttController:
                 for s in to_mermaid(top_p):
                     result.append(f"{ws}{ws}{top_p.h.strip()} {s}\n")
                 for p in top_p.subtree():
-                    if lines := to_mermaid(p):
-                        for s in lines:
-                            result.append(f"{ws}{ws}{p.h.strip()} {s}\n")
+                    lines = to_mermaid(p)
+                    for s in lines:
+                        result.append(f"{ws}{ws}{p.h.strip()} {s}\n")
             return result
 
         # @+node:ekr.20260927064818.1: *5* function: make_tasks
