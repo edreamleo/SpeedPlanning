@@ -26,7 +26,7 @@ Product Launch Plan
 .. @+node:ekr.20260927023522.1: *4* Release day
 :milestone, after testing, 0d
 .. @+node:ekr.20260925121941.1: *3* Celebrate
-Hurray!     :milestone, after marketing, 7d
+:milestone, after marketing, 7d
 .. @+node:ekr.20260924042736.1: ** planning-root
 @language rest
 @wrap

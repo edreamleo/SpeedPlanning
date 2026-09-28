@@ -351,54 +351,62 @@ def clean_lines(p: Position) -> list[str]:
 
 
 # @+node:ekr.20260926121726.1: *3* class GanttTask
-after_name_pat = re.compile(rf"^.*?\:\w+\,\s*after\s+(\w+)")
-mermaid_name_pat = re.compile(rf"^.*?\:\w+\,\s*(\w+)")
+# :active, proto, after reqs
+after_two_names_pat = re.compile(rf"^\:(\w+)\,\s+(\w+)\,after\s+(\w+)")
+
+# :testing, after proto
+# :milestone, after testing
+after_one_name_pat = re.compile(rf"^\:(\w+)\,\s*after\s+(\w+)")
+
+# :done, research
+no_after_pat = re.compile(rf"^\:(\w+)\,\s*(\w+)")
 
 
 class GanttTask:
     def __init__(self, p: Position) -> None:
 
+        self.after_mermaid_tasks = []
+        self.lines = clean_lines(p)
+        self.mermaid_tasks = []  # Set below.
         self.p = p.copy()
         self.title = p.h.strip()
-
-        self.after_mermaid_tasks = []
-        self.mermaid_tasks = []  # Set below.
 
         # Add title to global title_to_task dict.
         assert self.title not in title_to_task
         title_to_task[self.title] = self
 
+        def add_after_name(name: str) -> None:
+            if name not in self.after_mermaid_tasks:
+                self.after_mermaid_tasks.append(name)
+
+        def add_m_name(name1: str, name2: str) -> None:
+            name = name2 if name1 in ('active', 'done', 'milestone') else name1
+            if not name:
+                g.trace(f"Oops: {name1=} {name2=}")
+                return
+            # Update global mermaid_tasks list.
+            if name not in mermaid_tasks:
+                mermaid_tasks.append(name)
+            # Update global mermaid_task_to_tasks dict.
+            aList = mermaid_task_to_tasks.get(name, [])
+            if self not in aList:
+                aList.append(self)
+                mermaid_task_to_tasks[name] = aList
+
         # Find mermaid task names and update data structures.
-        self.lines = clean_lines(p)
         self.mermaid_tasks: list[str] = []
         for s in self.lines:
-            if m := after_name_pat.match(s):
-                after_task = m.group(1)
-                # Update self.mermaid_tasks list.
-                if after_task not in self.after_mermaid_tasks:
-                    self.after_mermaid_tasks.append(after_task)
-                # Update global mermaid_tasks list.
-                if after_task not in mermaid_tasks:
-                    mermaid_tasks.append(after_task)
-                # Update global mermaid_task_to_tasks dict.
-                aList = mermaid_task_to_tasks.get(after_task, [])
-                if self not in aList:
-                    aList.append(self)
-                    mermaid_task_to_tasks[after_task] = aList
-                continue  # Prevent any other match.
-            if m := mermaid_name_pat.match(s):
-                mermaid_task = m.group(1)
-                # Update self.mermaid_tasks list.
-                if mermaid_task not in self.mermaid_tasks:
-                    self.mermaid_tasks.append(mermaid_task)
-                # Update global mermaid_tasks list.
-                if mermaid_task not in mermaid_tasks:
-                    mermaid_tasks.append(mermaid_task)
-                # Update global mermaid_task_to_tasks dict.
-                aList = mermaid_task_to_tasks.get(mermaid_task, [])
-                if self not in aList:
-                    aList.append(self)
-                    mermaid_task_to_tasks[mermaid_task] = aList
+            if m := after_two_names_pat.match(s):
+                name1, name2, name3 = m.group(1), m.group(2), m.group(3)
+                add_m_name(name1, name2)
+                add_after_name(name3)
+            elif m := after_one_name_pat.match(s):
+                name1, name2 = m.group(1), m.group(2)
+                add_m_name(name1, '')
+                add_after_name(name2)
+            elif m := no_after_pat.match(s):
+                name1, name2 = m.group(1), m.group(2)
+                add_m_name(name1, name2)
 
         # Dependencies...
 
@@ -416,6 +424,9 @@ class GanttTask:
         self.ls = -1  # Latest Start
         self.lf = -1  # Latest Finish
         self.slack = -1
+
+        if 1 and self.lines:
+            g.trace(f"{self.title:20} {self.lines}")
 
     def _show_list(self, tasks: list[GanttTask], tag: str) -> str:
         if not tasks:
@@ -509,7 +520,7 @@ class GanttController:
             # Step 1: Create all Task.deps lists.
             for task in tasks:
                 for m_task in task.after_mermaid_tasks:
-                    assert m_task in mermaid_tasks, mermaid_tasks
+                    assert m_task in mermaid_tasks, f"{m_task} not in {mermaid_tasks}"
                     aList = mermaid_task_to_tasks.get(m_task)
                     for dep_task in aList:
                         assert dep_task in tasks, repr(dep_task)
@@ -599,7 +610,7 @@ class GanttController:
             print('Tasks...')
             for z in tasks:
                 print(z)
-        if 0:
+        if 1:
             print()
             g.printObj(list(mermaid_tasks), tag='Mermaid tasks')
         if 0:
