@@ -360,6 +360,8 @@ after_one_name_pat = re.compile(rf"^\:(\w+)\,\s*after\s+(\w+)")
 # :done, research
 no_after_pat = re.compile(rf"^\:(\w+)\,\s*(\w+)")
 
+duration_pat = re.compile(rf"^.*?\,\s*([0-9]+)\s*d")
+
 
 class GanttTask:
     # @+others
@@ -412,6 +414,12 @@ class GanttTask:
             elif m := no_after_pat.match(s):
                 name1, name2 = m.group(1), m.group(2)
                 add_m_name(name1, name2)
+        # Set the duration.
+        self.duration = 0
+        for s in self.lines:
+            if m := duration_pat.match(s):
+                self.duration = int(m.group(1))
+                break
 
         # Dependencies...
 
@@ -423,7 +431,6 @@ class GanttTask:
         self.successors = []
 
         # Metrics
-        self.duration = 0
         self.es = -1  # Earliest Start
         self.ef = -1  # Earliest Finish
         self.ls = -1  # Latest Start
@@ -452,7 +459,7 @@ class GanttTask:
             succ_s = self._show_list(self.successors, tag='successors')
         else:
             succ_s = ''
-        return f"GanttTask: {self.title:>18}{m_tasks_s}{m_after_tasks_s}{deps_s}{succ_s}"
+        return f"GanttTask: {self.title:>18} time: {self.duration:2} {m_tasks_s}{m_after_tasks_s}{deps_s}{succ_s}"
 
     # @+node:ekr.20260928103311.1: *4* GanttTask._show_list
     def _show_list(self, tasks: list[GanttTask], tag: str) -> str:
@@ -638,7 +645,7 @@ class GanttController:
         root_lines = [z for z in g.splitLines(root.b) if z.strip()]
         title = root_lines[0] if root_lines else 'Unknown Project Title'
         result = make_mermaid(format='dateFormat YYYY-MM-DD', title=title)
-        if 1:
+        if 0:
             g.printObj(result, tag='mermaid lines')
         return ''.join(result)
 
