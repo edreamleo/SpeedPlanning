@@ -336,8 +336,8 @@ key = 'gantt-chart'
 headline = 'gantt-root'
 
 # Define global data.
-mermaid_task_to_tasks: dict[str, list[GanttTask]] = {}
-mermaid_tasks: list[str] = []  # Set of valid mermaid tasks.
+mermaid_task_names_to_tasks: dict[str, list[GanttTask]] = {}
+mermaid_task_names: list[str] = []  # Set of valid mermaid tasks.
 sorted_tasks: list[GanttTask] = []
 tasks: list[GanttTask] = []
 title_to_task: dict[str, GanttTask] = {}
@@ -365,9 +365,11 @@ no_after_pat = re.compile(rf"^\:(\w+)\,\s*(\w+)")
 class GanttTask:
     def __init__(self, p: Position) -> None:
 
-        self.after_mermaid_tasks = []
+        self.after_mermaid_task_names: list[str] = []  # Set below.
+        self.after_mermaid_tasks: list[GanttTask] = []  # Set later.
         self.lines = clean_lines(p)
-        self.mermaid_tasks = []  # Set below.
+        self.mermaid_task_names: list[str] = []  # Set below.
+        self.mermaid_tasks: list[GanttTask] = []  # Set later.
         self.p = p.copy()
         self.title = p.h.strip()
 
@@ -377,24 +379,25 @@ class GanttTask:
 
         def add_after_name(name: str) -> None:
             if name not in self.after_mermaid_tasks:
-                self.after_mermaid_tasks.append(name)
+                self.after_mermaid_task_names.append(name)
 
         def add_m_name(name1: str, name2: str) -> None:
             name = name2 if name1 in ('active', 'done', 'milestone') else name1
             if not name:
-                g.trace(f"Oops: {name1=} {name2=}")
-                return
-            # Update global mermaid_tasks list.
-            if name not in mermaid_tasks:
-                mermaid_tasks.append(name)
-            # Update global mermaid_task_to_tasks dict.
-            aList = mermaid_task_to_tasks.get(name, [])
+                return  # Not an error. The line does not define mermaid task name.
+            # Update self.mermaid_task_names.
+            if name not in self.mermaid_task_names:
+                self.mermaid_task_names.append(name)
+            # Update global mermaid_task_names list.
+            if name not in mermaid_task_names:
+                mermaid_task_names.append(name)
+            # Update global mermaid_task_names_to_tasks dict.
+            aList = mermaid_task_names_to_tasks.get(name, [])
             if self not in aList:
                 aList.append(self)
-                mermaid_task_to_tasks[name] = aList
+                mermaid_task_names_to_tasks[name] = aList
 
         # Find mermaid task names and update data structures.
-        self.mermaid_tasks: list[str] = []
         for s in self.lines:
             if m := after_two_names_pat.match(s):
                 name1, name2, name3 = m.group(1), m.group(2), m.group(3)
@@ -425,24 +428,23 @@ class GanttTask:
         self.lf = -1  # Latest Finish
         self.slack = -1
 
-        if 1 and self.lines:
+        if 0 and self.lines:
             g.trace(f"{self.title:20} {self.lines}")
 
     def _show_list(self, tasks: list[GanttTask], tag: str) -> str:
         if not tasks:
             return ''
+        # g.trace(f"{tag} {[z.title for z in tasks]}")
         result = [f" {tag}: "]
         for task in tasks:
-            result.append(f" {task.title}")
-            # if task.mermaid_tasks:
-            #     result.append(','.join(task.mermaid_tasks))
-            # else:
-            #     result.append(f" Oops! {task.title}")
+            result.append(f" {task.title}, ")
         return ''.join(result)
 
     def __repr__(self):
-        m_tasks_s = f"{' ' * 8}{self.mermaid_tasks}" if self.mermaid_tasks else ''
-        m_after_tasks_s = f" after: {self.after_mermaid_tasks}" if self.after_mermaid_tasks else ''
+        m_task_names = f"[{','.join(self.mermaid_task_names)}]" if self.mermaid_task_names else ''
+        m_tasks_s = f" {m_task_names:12}" if m_task_names else ''
+        m_after_names = self.after_mermaid_task_names
+        m_after_tasks_s = f" after: {m_after_names}" if m_after_names else ''
         deps_s = self._show_list(self.deps, tag='deps')
         succ_s = self._show_list(self.successors, tag='successors')
         return f"GanttTask: {self.title:>20}{m_tasks_s}{m_after_tasks_s}{deps_s}{succ_s}"
@@ -518,14 +520,21 @@ class GanttController:
             """Create task.deps and task.successors for all tasks."""
 
             # Step 1: Create all Task.deps lists.
+            g.trace('*****')
             for task in tasks:
-                for m_task in task.after_mermaid_tasks:
-                    assert m_task in mermaid_tasks, f"{m_task} not in {mermaid_tasks}"
-                    aList = mermaid_task_to_tasks.get(m_task)
-                    for dep_task in aList:
-                        assert dep_task in tasks, repr(dep_task)
-                        if dep_task not in task.deps:
-                            task.deps.append(dep_task)
+                for after_name in task.after_mermaid_task_names:
+                    g.trace(f"{task.title:<20} after: {after_name}")
+                    assert after_name in mermaid_task_names, f"{m_task} not in {mermaid_task_names}"
+                    after_tasks = mermaid_task_names_to_tasks.get(after_name)
+                    for after_task in after_tasks:
+                        assert isinstance(after_task, GanttTask), repr(after_task)
+                        if after_task not in task.deps:
+                            task.deps.append(after_task)
+
+                    # for dep_task in aList:
+                    #     assert dep_task in tasks, repr(dep_task)
+                    #     if dep_task not in task.deps:
+                    #         task.deps.append(dep_task)
 
             # after_pat = re.compile(rf"^.*?\bafter\s*(\w+)")
             # for p in root.subtree():
@@ -605,25 +614,19 @@ class GanttController:
 
         # Create tasks.
         make_tasks(root)
-        if 0:
+        if 1:
             print()
             print('Tasks...')
             for z in tasks:
                 print(z)
         if 1:
             print()
-            g.printObj(list(mermaid_tasks), tag='Mermaid tasks')
+            g.printObj(list(mermaid_task_names), tag='Mermaid tasks')
         if 0:
             print()
             print('title_to_task...')
             for title, task in sorted(title_to_task.items()):
                 print(task)
-        if 1:
-            print()
-            print('mermaid_task_to_tasks...')
-            for mermaid_task, task_list in sorted(mermaid_task_to_tasks.items()):
-                print(f"{mermaid_task:>10}: {', '.join(z.title for z in task_list)}")
-                # fg.printObj(task_list, tag=f"tasks for {mermaid_task}")
 
         # Create forward and backward dependencies.
         make_deps(root, tasks)
@@ -632,7 +635,7 @@ class GanttController:
         sorted_tasks = sort_tasks(tasks)
         if 1:
             print()
-            print('Sorted tasks...')
+            print('Sorted tasks (with deps and successors)...')
             for z in sorted_tasks:
                 print(z)
         if 0:
