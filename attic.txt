@@ -2,6 +2,14 @@
 # @+node:ekr.20260924114454.1: * @file attic.txt
 # @@nosearch
 # @+all
+# @+node:ekr.20260922175054.9: ** << create the webchannel script >>
+# Bypass Chromium origin restrictions.
+js_file = QFile(":/qtwebchannel/qwebchannel.js")
+if not js_file.open(QIODevice.OpenModeFlag.ReadOnly):
+    raise RuntimeError("Failed to locate qwebchannel.js within Qt resources.")
+
+# The html references this script.
+webchannel_script = js_file.readAll().data().decode('utf-8')
 # @+node:ekr.20260922175054.8: ** class Controller (do not delete)
 @language python
 
@@ -263,14 +271,6 @@ def update_content(self, new_content: str = '') -> str:
         .replace('webchannel_script', webchannel_script)
         .replace('mermaid_content', self.content)
     )
-# @+node:ekr.20260922175054.9: ** << create the webchannel script >>
-# Bypass Chromium origin restrictions.
-js_file = QFile(":/qtwebchannel/qwebchannel.js")
-if not js_file.open(QIODevice.OpenModeFlag.ReadOnly):
-    raise RuntimeError("Failed to locate qwebchannel.js within Qt resources.")
-
-# The html references this script.
-webchannel_script = js_file.readAll().data().decode('utf-8')
 # @+node:ekr.20260924114719.1: ** Design notes (obsolete)
 @language rest
 @wrap
@@ -320,6 +320,17 @@ Part of value added is all the infrastruction.
 === Jira has plugin system.
 
 Could be standalone or Jira plugin.
+# @+node:ekr.20260926052456.1: ** Not used: successor order
+# Order the successors.
+ordered_successors = []
+visited = set()
+
+def visit_successor(task):
+    if task not in visited:
+        ordered_successors.append(task)
+        visited.add(task)
+        for dep in task.successors:
+            visit(dep)
 # @-all
 # @@language python
 # @-leo

@@ -613,7 +613,7 @@ class GanttController:
 
             def name(task: GanttTask) -> str:
                 """Return a short name for the task."""
-                return chr(ord('A') + task.task_n)
+                return f"T{task.task_n}"
 
             print()
             print('Ordered tasks, with deps:')
