@@ -706,6 +706,9 @@ class GanttWebView(QWebEngineView):
     # Override the native Qt event handler
     def closeEvent(self, event: QCloseEvent):
 
+        g.trace()
+        g.sleep(0.1)
+
         g.app.permanentScriptDict[key] = None
         # Allow the window to close
         event.accept()
