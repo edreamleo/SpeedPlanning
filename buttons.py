@@ -349,8 +349,6 @@ def clean_lines(p: Position) -> list[str]:
 
 
 # @+node:ekr.20260926121726.1: *3* class GanttTask
-
-
 class GanttTask:
     # :active, proto, after reqs
     after_two_names_pat = re.compile(rf"^\:(\w+)\,\s+(\w+)\,after\s+(\w+)")
@@ -603,6 +601,16 @@ class GanttController:
         # @+node:ekr.20260929072100.1: *5* function: show_short_deps
         def show_short_deps(tasks: list[GanttTask]) -> None:
 
+            max_n = 5
+
+            def mermaid_name(task: GanttTask) -> str:
+                """Return the mermaid task name for this task."""
+                nonlocal max_n
+                names = task.mermaid_task_names
+                result = names[0] if names else ''
+                max_n = max(max_n, len(result))
+                return result
+
             def name(task: GanttTask) -> str:
                 """Return a short name for the task."""
                 return chr(ord('A') + task.task_n)
@@ -610,7 +618,8 @@ class GanttController:
             print()
             print('Ordered tasks, with deps:')
             for task in tasks:
-                print(f"{name(task)} [{','.join(name(z) for z in task.deps)}]")
+                s = f"{mermaid_name(task):>10} {name(task)} [{','.join(name(z) for z in task.deps)}]"
+                print(s.replace(':>10', f":>{str(max_n)}"))
 
         # @+node:ekr.20260927065200.1: *5* function: sort_tasks
         def sort_tasks(tasks: list[GanttTasks]) -> list[GanttTasks]:
@@ -674,6 +683,7 @@ class GanttController:
         result = make_mermaid(format='dateFormat YYYY-MM-DD', title=title)
         patch_mermaid(critical_path, result)
         if 1:
+            print()
             g.printObj(result, tag='mermaid lines')
         return ''.join(result)
 
