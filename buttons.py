@@ -554,7 +554,7 @@ class GanttController:
                 for after_name in task.after_mermaid_task_names:
                     # g.trace(f"{task.title:<20} after: {after_name}")
                     assert after_name in g_mermaid_task_names, (
-                        f"{m_task} not in {g_mermaid_task_names}"
+                        f"{after_name} not in {g_mermaid_task_names}"
                     )
                     after_tasks = g_mermaid_task_names_to_tasks.get(after_name)
                     for after_task in after_tasks:
@@ -618,7 +618,7 @@ class GanttController:
             print()
             print('Ordered tasks, with deps:')
             for task in tasks:
-                s = f"{mermaid_name(task):>10} {name(task)} [{','.join(name(z) for z in task.deps)}]"
+                s = f"{mermaid_name(task):>10} {name(task):<3} [{','.join(name(z) for z in task.deps)}]"
                 print(s.replace(':>10', f":>{max_n}"))
 
         # @+node:ekr.20260927065200.1: *5* function: sort_tasks
