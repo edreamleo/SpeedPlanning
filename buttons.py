@@ -619,7 +619,7 @@ class GanttController:
             print('Ordered tasks, with deps:')
             for task in tasks:
                 s = f"{mermaid_name(task):>10} {name(task)} [{','.join(name(z) for z in task.deps)}]"
-                print(s.replace(':>10', f":>{str(max_n)}"))
+                print(s.replace(':>10', f":>{max_n}"))
 
         # @+node:ekr.20260927065200.1: *5* function: sort_tasks
         def sort_tasks(tasks: list[GanttTasks]) -> list[GanttTasks]:
