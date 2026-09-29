@@ -357,7 +357,7 @@ class GanttTask:
     after_one_name_pat = re.compile(rf"^\:(\w+)\,\s*after\s+(\w+)")
     # :done, research
     no_after_pat = re.compile(rf"^\:(\w+)\,\s*(\w+)")
-    duration_pat = re.compile(rf"^.*?\,\s*([0-9]+)\s*d")
+    duration_pat = re.compile(rf"^.*?\,\s*([0-9]+)\s*[dhm]")
 
     # @+others
     # @+node:ekr.20260928103315.1: *4* GanttTask.__repr__
