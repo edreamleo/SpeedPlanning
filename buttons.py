@@ -349,23 +349,31 @@ def clean_lines(p: Position) -> list[str]:
 
 
 # @+node:ekr.20260926121726.1: *3* class GanttTask
-# :active, proto, after reqs
-after_two_names_pat = re.compile(rf"^\:(\w+)\,\s+(\w+)\,after\s+(\w+)")
-
-# :testing, after proto
-# :milestone, after testing
-after_one_name_pat = re.compile(rf"^\:(\w+)\,\s*after\s+(\w+)")
-
-# :done, research
-no_after_pat = re.compile(rf"^\:(\w+)\,\s*(\w+)")
-
-duration_pat = re.compile(rf"^.*?\,\s*([0-9]+)\s*d")
 
 
 class GanttTask:
+    # :active, proto, after reqs
+    after_two_names_pat = re.compile(rf"^\:(\w+)\,\s+(\w+)\,after\s+(\w+)")
+    # :testing, after proto
+    # :milestone, after testing
+    after_one_name_pat = re.compile(rf"^\:(\w+)\,\s*after\s+(\w+)")
+    # :done, research
+    no_after_pat = re.compile(rf"^\:(\w+)\,\s*(\w+)")
+    duration_pat = re.compile(rf"^.*?\,\s*([0-9]+)\s*d")
+
     # @+others
     # @+node:ekr.20260928103315.1: *4* GanttTask.__repr__
     def __repr__(self):
+
+        def show_list(tasks: list[GanttTask], tag: str) -> str:
+            if not tasks:
+                return ''
+            result = []
+            for task in tasks:
+                if task.mermaid_task_names:
+                    result.append(', '.join(task.mermaid_task_names))
+            return f"{tag}: [{', '.join(result)}]" if result else ''
+
         if self.mermaid_task_names:
             m_task_names = f"[{','.join(self.mermaid_task_names)}]"
             m_tasks_s = f" {m_task_names:12}"
@@ -377,31 +385,19 @@ class GanttTask:
         else:
             m_after_tasks_s = ' ' * 22
 
-        deps_s = self._show_list(self.deps, tag='deps')
+        deps_s = show_list(self.deps, tag='deps')
         deps_s = f"{deps_s:20}"
         if self.successors:
-            succ_s = self._show_list(self.successors, tag='successors')
+            succ_s = show_list(self.successors, tag='successors')
         else:
             succ_s = ''
         return f"GanttTask: {self.title:>18} time: {self.duration:2} {m_tasks_s}{m_after_tasks_s}{deps_s}{succ_s}"
 
-    # @+node:ekr.20260928131306.1: *4* GanttTask._short_repr
+    # @+node:ekr.20260928131306.1: *4* GanttTask.short_repr
     def short_repr(self) -> None:
         names = self.mermaid_task_names
         tasks_s = f"[{','.join(names)}]" if names else ''
         return f"GanttTask: {self.title:>18} time: {self.duration:2} {tasks_s}"
-
-    # @+node:ekr.20260928103311.1: *4* GanttTask._show_list
-    def _show_list(self, tasks: list[GanttTask], tag: str) -> str:
-        if not tasks:
-            return ''
-        result = []
-        for task in tasks:
-            if task.mermaid_task_names:
-                result.append(', '.join(task.mermaid_task_names))
-        return f"{tag}: [{', '.join(result)}]" if result else ''
-
-    # @+node:ekr.20260928103820.1: *4* GanttTask: add_m_name
 
     # @+node:ekr.20260929065811.1: *4* GanttTask: init
     def init(self):
@@ -429,24 +425,24 @@ class GanttTask:
 
         # Find mermaid task names and update data structures.
         for s in self.lines:
-            if m := after_two_names_pat.match(s):
+            if m := self.after_two_names_pat.match(s):
                 name1, name2, name3 = m.group(1), m.group(2), m.group(3)
                 add_m_name(name1, name2)
                 add_after_name(name3)
-            elif m := after_one_name_pat.match(s):
+            elif m := self.after_one_name_pat.match(s):
                 name1, name2 = m.group(1), m.group(2)
                 add_m_name(name1, '')
                 add_after_name(name2)
-            elif m := no_after_pat.match(s):
+            elif m := self.no_after_pat.match(s):
                 name1, name2 = m.group(1), m.group(2)
                 add_m_name(name1, name2)
 
-            # Set the duration.
-            self.duration = 0
-            for s in self.lines:
-                if m := duration_pat.match(s):
-                    self.duration = int(m.group(1))
-                    break
+        # Set the duration.
+        self.duration = 0
+        for s in self.lines:
+            if m := self.duration_pat.match(s):
+                self.duration = int(m.group(1))
+                break
 
     # @-others
 
@@ -604,6 +600,18 @@ class GanttController:
                 if any(z in s for z in names) and ':' in s:
                     result[i] = s.replace(':', ':crit, ')
 
+        # @+node:ekr.20260929072100.1: *5* function: show_short_deps
+        def show_short_deps(tasks: list[GanttTask]) -> None:
+
+            def name(task: GanttTask) -> str:
+                """Return a short name for the task."""
+                return chr(ord('A') + task.task_n)
+
+            print()
+            print('Ordered tasks, with deps:')
+            for task in tasks:
+                print(f"{name(task)} [{','.join(name(z) for z in task.deps)}]")
+
         # @+node:ekr.20260927065200.1: *5* function: sort_tasks
         def sort_tasks(tasks: list[GanttTasks]) -> list[GanttTasks]:
             """Return an ordered list of tasks."""
@@ -639,6 +647,8 @@ class GanttController:
 
         # Create forward and backward dependencies.
         make_deps(root, tasks)
+        if 1:
+            show_short_deps(tasks)
 
         # Sort the tasks based on the dependencies.
         sorted_tasks = sort_tasks(tasks)
@@ -647,12 +657,6 @@ class GanttController:
             print('Sorted tasks...')
             for z in sorted_tasks:
                 print(z)
-        if 0:
-            print()
-            print('Reversed ordered taskss')
-            for z in reversed(sorted_tasks):
-                print(z)
-            print()
 
         # Compute Task.metrics and critical path.
         project_duration, critical_path = calculate_critical_path(tasks, sorted_tasks)
