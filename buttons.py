@@ -336,10 +336,9 @@ key = 'gantt-chart'
 headline = 'gantt-root'
 
 # Define global data.
-mermaid_task_names_to_tasks: dict[str, list[GanttTask]] = {}
-mermaid_task_names: list[str] = []  # Set of valid mermaid tasks.
-sorted_tasks: list[GanttTask] = []
-tasks: list[GanttTask] = []
+g_mermaid_task_names_to_tasks: dict[str, list[GanttTask]] = {}
+g_mermaid_task_names: list[str] = []  # Set of valid mermaid tasks.
+g_n_tasks = 0
 
 
 # @+others
@@ -365,82 +364,6 @@ duration_pat = re.compile(rf"^.*?\,\s*([0-9]+)\s*d")
 
 class GanttTask:
     # @+others
-    # @+node:ekr.20260928104030.1: *4* GanttTaks.__init__ & helpers
-    def __init__(self, p: Position) -> None:
-
-        self.after_mermaid_task_names: list[str] = []  # Set below.
-        self.after_mermaid_tasks: list[GanttTask] = []  # Set later.
-        self.lines = clean_lines(p)
-        self.mermaid_task_names: list[str] = []  # Set below.
-        self.mermaid_tasks: list[GanttTask] = []  # Set later.
-        self.p = p.copy()
-        # Clean titles so they don't confuse the regex parsers.
-        self.title = p.h.strip().replace(':', ' ').replace(',', ' ')
-
-        # @+others
-        # @+node:ekr.20260928120002.1: *5* function: add_after_name
-        def add_after_name(name: str) -> None:
-            if name not in self.after_mermaid_tasks:
-                self.after_mermaid_task_names.append(name)
-
-        # @+node:ekr.20260928103820.1: *5* function: add_m_name
-        def add_m_name(sename1: str, name2: str) -> None:
-            name = name2 if name1 in ('active', 'done', 'milestone') else name1
-            if not name:
-                return  # Not an error. The line does not define mermaid task name.
-            # Update self.mermaid_task_names.
-            if name not in self.mermaid_task_names:
-                self.mermaid_task_names.append(name)
-            # Update global mermaid_task_names list.
-            if name not in mermaid_task_names:
-                mermaid_task_names.append(name)
-            # Update global mermaid_task_names_to_tasks dict.
-            aList = mermaid_task_names_to_tasks.get(name, [])
-            if self not in aList:
-                aList.append(self)
-                mermaid_task_names_to_tasks[name] = aList
-
-        # @-others
-
-        # Find mermaid task names and update data structures.
-        for s in self.lines:
-            if m := after_two_names_pat.match(s):
-                name1, name2, name3 = m.group(1), m.group(2), m.group(3)
-                add_m_name(name1, name2)
-                add_after_name(name3)
-            elif m := after_one_name_pat.match(s):
-                name1, name2 = m.group(1), m.group(2)
-                add_m_name(name1, '')
-                add_after_name(name2)
-            elif m := no_after_pat.match(s):
-                name1, name2 = m.group(1), m.group(2)
-                add_m_name(name1, name2)
-        # Set the duration.
-        self.duration = 0
-        for s in self.lines:
-            if m := duration_pat.match(s):
-                self.duration = int(m.group(1))
-                break
-
-        # Dependencies...
-
-        # deps: Tasks that this tasks depends on.
-        # They must all finish before this task can start.
-        self.deps = []
-        # successors:Tasks that depend on *this* task.
-        # This task must finish before any of these can start.
-        self.successors = []
-
-        # Metrics
-        self.es = -1  # Earliest Start
-        self.ef = -1  # Earliest Finish
-        self.ls = -1  # Latest Start
-        self.lf = -1  # Latest Finish
-        self.slack = -1
-
-        if 0 and self.lines:
-            g.trace(f"{self.title:20} {self.lines}")
-
     # @+node:ekr.20260928103315.1: *4* GanttTask.__repr__
     def __repr__(self):
         if self.mermaid_task_names:
@@ -478,7 +401,91 @@ class GanttTask:
                 result.append(', '.join(task.mermaid_task_names))
         return f"{tag}: [{', '.join(result)}]" if result else ''
 
+    # @+node:ekr.20260928103820.1: *4* GanttTask: add_m_name
+
+    # @+node:ekr.20260929065811.1: *4* GanttTask: init
+    def init(self):
+        """GanttTask.init: handle complex initialization."""
+
+        def add_after_name(name: str) -> None:
+            if name not in self.after_mermaid_tasks:
+                self.after_mermaid_task_names.append(name)
+
+        def add_m_name(name1: str, name2: str) -> None:
+            name = name2 if name1 in ('active', 'done', 'milestone') else name1
+            if not name:
+                return  # Not an error. The line does not define mermaid task name.
+            # Update self.mermaid_task_names.
+            if name not in self.mermaid_task_names:
+                self.mermaid_task_names.append(name)
+            # Update global mermaid_task_names list.
+            if name not in g_mermaid_task_names:
+                g_mermaid_task_names.append(name)
+            # Update global g_mermaid_task_names_to_tasks dict.
+            aList = g_mermaid_task_names_to_tasks.get(name, [])
+            if self not in aList:
+                aList.append(self)
+                g_mermaid_task_names_to_tasks[name] = aList
+
+        # Find mermaid task names and update data structures.
+        for s in self.lines:
+            if m := after_two_names_pat.match(s):
+                name1, name2, name3 = m.group(1), m.group(2), m.group(3)
+                add_m_name(name1, name2)
+                add_after_name(name3)
+            elif m := after_one_name_pat.match(s):
+                name1, name2 = m.group(1), m.group(2)
+                add_m_name(name1, '')
+                add_after_name(name2)
+            elif m := no_after_pat.match(s):
+                name1, name2 = m.group(1), m.group(2)
+                add_m_name(name1, name2)
+
+            # Set the duration.
+            self.duration = 0
+            for s in self.lines:
+                if m := duration_pat.match(s):
+                    self.duration = int(m.group(1))
+                    break
+
     # @-others
+
+    def __init__(self, p: Position) -> None:
+
+        global g_n_tasks
+        self.after_mermaid_task_names: list[str] = []  # Set below.
+        self.after_mermaid_tasks: list[GanttTask] = []  # Set later.
+        self.lines = clean_lines(p)
+        self.task_n = g_n_tasks
+        g_n_tasks += 1
+        self.mermaid_task_names: list[str] = []  # Set below.
+        self.mermaid_tasks: list[GanttTask] = []  # Set later.
+        self.p = p.copy()
+        # Clean titles so they don't confuse the regex parsers.
+        self.title = p.h.strip().replace(':', ' ').replace(',', ' ')
+
+        # Dependencies...
+
+        # deps: Tasks that this tasks depends on.
+        # They must all finish before this task can start.
+        self.deps = []
+        # successors:Tasks that depend on *this* task.
+        # This task must finish before any of these can start.
+        self.successors = []
+
+        # Metrics
+        self.duration = 0
+        self.es = -1  # Earliest Start
+        self.ef = -1  # Earliest Finish
+        self.ls = -1  # Latest Start
+        self.lf = -1  # Latest Finish
+        self.slack = -1
+
+        # Complete the init.
+        self.init()
+
+        if 0 and self.lines:
+            g.trace(f"{self.title:20} {self.lines}")
 
 
 # @+node:ekr.20260925081852.1: *3* class GanttController
@@ -552,8 +559,10 @@ class GanttController:
             for task in tasks:
                 for after_name in task.after_mermaid_task_names:
                     # g.trace(f"{task.title:<20} after: {after_name}")
-                    assert after_name in mermaid_task_names, f"{m_task} not in {mermaid_task_names}"
-                    after_tasks = mermaid_task_names_to_tasks.get(after_name)
+                    assert after_name in g_mermaid_task_names, (
+                        f"{m_task} not in {g_mermaid_task_names}"
+                    )
+                    after_tasks = g_mermaid_task_names_to_tasks.get(after_name)
                     for after_task in after_tasks:
                         assert isinstance(after_task, GanttTask), repr(after_task)
                         # Update task.deps.
@@ -582,13 +591,8 @@ class GanttController:
             return result
 
         # @+node:ekr.20260927064818.1: *5* function: make_tasks
-        def make_tasks(root) -> None:
-
-            # global n_tasks
-            for p in root.subtree():
-                # n_tasks += 1
-                # task = GanttTask(id_=f"task{n_tasks}", title=p.h.strip(), p=p.copy())
-                tasks.append(GanttTask(p))
+        def make_tasks(root) -> list[GanttTask]:
+            return [GanttTask(p) for p in root.subtree()]
 
         # @+node:ekr.20260928132246.1: *5* function: patch_mermaid
         def patch_mermaid(tasks: list[GanttTask], result: list[str]) -> None:
@@ -623,7 +627,7 @@ class GanttController:
         # @-others
 
         # Create tasks.
-        make_tasks(root)
+        tasks = make_tasks(root)
         if 0:
             print()
             print('Tasks...')
@@ -631,7 +635,7 @@ class GanttController:
                 print(z)
         if 1:
             print()
-            print(f"Mermaid tasks names: {', '.join(sorted(mermaid_task_names))}")
+            print(f"Mermaid tasks names: {', '.join(sorted(g_mermaid_task_names))}")
 
         # Create forward and backward dependencies.
         make_deps(root, tasks)
