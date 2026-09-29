@@ -345,7 +345,7 @@ g_n_tasks = 0
 # @+node:ekr.20260927100045.1: *3* function: clean_lines
 def clean_lines(p: Position) -> list[str]:
     lines = [z.strip() for z in g.splitLines(p.b) if z.strip()]
-    return [z for z in lines if not z.startswith('#')]
+    return [z for z in lines if not z.startswith(('#', '..'))]
 
 
 # @+node:ekr.20260926121726.1: *3* class GanttTask
