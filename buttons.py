@@ -334,6 +334,7 @@ gantt_template = textwrap.dedent("""
 # @-<< define gantt_template >>
 key = 'gantt-chart'
 headline = 'gantt-root'
+window_title = 'Brevard County EDC'
 
 # Define global data.
 g_mermaid_task_names_to_tasks: dict[str, list[GanttTask]] = {}
@@ -725,6 +726,7 @@ else:
     if not view:
         g.app.permanentScriptDict[key] = view = GanttWebView()
     controller.view = view
+    view.setWindowTitle(window_title)
     view.setHtml(controller.update_gantt_content(headline))
     view.show()
     c.bodyWantsFocusNow()
