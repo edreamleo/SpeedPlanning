@@ -8,6 +8,8 @@
 .. @+all
 .. @+node:ekr.20260925084827.1: ** gantt-root
 Product Launch Plan
+
+@language rest
 .. @+node:ekr.20260925091127.1: *3* Planning
 .. @+node:ekr.20260927021418.1: *4* Market research
 :done, research, 2024-03-01, 10d
@@ -15,6 +17,18 @@ Product Launch Plan
 .. @+node:ekr.20260927021430.1: *4* Requirements
 :done, reqs, after research, 7d
                
+.. @+node:ekr.20261001133331.1: *3* Test
+.. @+node:ekr.20261001133729.1: *4* Test zero
+@language python
+# status: active or done
+# date: starting date or after task
+# task-name, after proto, 10d
+:active, test1, after reqs, 10d
+
+.. @+node:ekr.20261001133732.1: *4* Test one
+# status: active or done
+# task-name, after proto, 10d
+# :active test2, after test1, 5d
 .. @+node:ekr.20260925091130.1: *3* Build
 .. @+node:ekr.20260927023219.1: *4* Design prototype
 :active, proto, after reqs, 14d
