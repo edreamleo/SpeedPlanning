@@ -476,7 +476,7 @@ flow-chart</t>
 mm;;=@language python
 \:# status: active or done
 \:# date: starting date or after task
-\::&lt;|optional status or milestone|&gt;, &lt;|task-name|&gt;, &lt;|date|&gt;, &lt;|duration (hdm()|&gt;</t>
+\::&lt;|optional status or milestone|&gt;, &lt;|task-name|&gt;, &lt;|date|&gt;, &lt;|duration (hdm)|&gt;</t>
 <t tx="ekr.20261001133331.1"></t>
 <t tx="ekr.20261001133729.1">@language python
 # status: active or done
